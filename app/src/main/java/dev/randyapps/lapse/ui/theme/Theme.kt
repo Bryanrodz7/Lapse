@@ -1,58 +1,81 @@
 package dev.randyapps.lapse.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.CompositionLocalProvider
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+/**
+ * Surfaces sit barely above the background on purpose. Separation in this app comes from
+ * spacing and hairlines, not from elevation, so surface and background stay close enough that
+ * Material's tonal elevation never draws a visible box.
+ */
+private val LightColors = lightColorScheme(
+    primary = PaperInk,
+    onPrimary = PaperBackground,
+    secondary = PaperInkMuted,
+    onSecondary = PaperBackground,
+    background = PaperBackground,
+    onBackground = PaperInk,
+    surface = PaperBackground,
+    onSurface = PaperInk,
+    surfaceVariant = PaperSurface,
+    onSurfaceVariant = PaperInkMuted,
+    surfaceContainer = PaperSurface,
+    surfaceContainerHigh = PaperSurface,
+    outline = PaperInkMuted,
+    outlineVariant = PaperHairline,
+    error = LightStatusPalette.expiresToday,
+    onError = PaperBackground,
+    // Snackbars use the inverse trio. Left at Material defaults they render lavender with a
+    // purple action, which is the one place stock colour would leak into the app.
+    inverseSurface = PaperInk,
+    inverseOnSurface = PaperBackground,
+    inversePrimary = DarkStatusPalette.soon,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val DarkColors = darkColorScheme(
+    primary = NightInk,
+    onPrimary = NightBackground,
+    secondary = NightInkMuted,
+    onSecondary = NightBackground,
+    background = NightBackground,
+    onBackground = NightInk,
+    surface = NightBackground,
+    onSurface = NightInk,
+    surfaceVariant = NightSurface,
+    onSurfaceVariant = NightInkMuted,
+    surfaceContainer = NightSurface,
+    surfaceContainerHigh = NightSurface,
+    outline = NightInkMuted,
+    outlineVariant = NightHairline,
+    error = DarkStatusPalette.expiresToday,
+    onError = NightBackground,
+    inverseSurface = NightInk,
+    inverseOnSurface = NightBackground,
+    inversePrimary = LightStatusPalette.urgent,
 )
 
+/**
+ * No dynamic color. The warm neutral base and the muted status hues are the app's identity;
+ * letting the system repaint them in the user's wallpaper colors would undo the one thing that
+ * makes it not look templated.
+ */
 @Composable
 fun LapseTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val colorScheme = if (darkTheme) DarkColors else LightColors
+    val statusPalette = if (darkTheme) DarkStatusPalette else LightStatusPalette
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    CompositionLocalProvider(LocalStatusPalette provides statusPalette) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = LapseTypography,
+            content = content,
+        )
     }
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
 }
