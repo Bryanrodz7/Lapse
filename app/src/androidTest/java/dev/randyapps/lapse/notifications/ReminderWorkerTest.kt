@@ -1,6 +1,7 @@
 package dev.randyapps.lapse.notifications
 
 import android.app.NotificationManager
+import android.service.notification.StatusBarNotification
 import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.test.core.app.ApplicationProvider
@@ -64,6 +65,29 @@ class ReminderWorkerTest {
     @After
     fun tearDown() {
         notificationManager.cancelAll()
+        // Cancellation is async too; let it drain so the next test starts from zero.
+        val deadline = System.currentTimeMillis() + 3_000
+        while (notificationManager.activeNotifications.isNotEmpty() &&
+            System.currentTimeMillis() < deadline
+        ) {
+            Thread.sleep(50)
+        }
+    }
+
+    /**
+     * NotificationManager.notify() is asynchronous, so reading activeNotifications straight
+     * after doWork() is a race — it passes most runs and fails some. Wait for the expected
+     * count instead of sampling once.
+     */
+    private fun awaitNotifications(expected: Int, timeoutMs: Long = 5_000): Array<StatusBarNotification> {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        var posted = notificationManager.activeNotifications
+        while (posted.size != expected && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50)
+            posted = notificationManager.activeNotifications
+        }
+        assertEquals("expected $expected notification(s)", expected, posted.size)
+        return posted
     }
 
     private fun item(name: String, days: Int) = Item(
@@ -134,8 +158,7 @@ class ReminderWorkerTest {
             val result = worker.doWork()
             assertTrue(result is ListenableWorker.Result.Success)
 
-            val posted = notificationManager.activeNotifications
-            assertEquals(1, posted.size)
+            val posted = awaitNotifications(1)
             assertTrue(
                 "notification should name the item",
                 posted.single().notification.extras
@@ -164,7 +187,7 @@ class ReminderWorkerTest {
                 .build()
                 .doWork()
 
-            val body = notificationManager.activeNotifications.single()
+            val body = awaitNotifications(1).single()
                 .notification.extras.getString("android.text")!!
             assertEquals("Expires 8 Sep 2026", body)
         } finally {
@@ -183,6 +206,8 @@ class ReminderWorkerTest {
 
         val result = worker.doWork()
         assertTrue(result is ListenableWorker.Result.Success)
+        // Give it the same window a real post would have had, then confirm nothing arrived.
+        Thread.sleep(500)
         assertEquals(0, notificationManager.activeNotifications.size)
     }
 

@@ -94,6 +94,19 @@
     <string name="permission_allow">Continue</string>
     <string name="permission_not_now">Not now</string>
 
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_default_reminders">Default reminders</string>
+    <string name="settings_default_reminders_hint">Pre-selected when you add something new. Existing items keep their own.</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Lapse %1$s</string>
+    <string name="settings_privacy">Everything stays on this device. No account, no cloud, no tracking.</string>
+    <string name="settings_font_credit">Set in Instrument Serif, used under the SIL Open Font License.</string>
+
     <!-- Categories -->
     <string name="category_id_and_license">ID &amp; license</string>
     <string name="category_vehicle">Vehicle</string>

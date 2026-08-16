@@ -17,9 +17,14 @@ import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.QuickPick
 import dev.randyapps.lapse.ui.edit.EditRoute
 import dev.randyapps.lapse.ui.home.HomeRoute
+import dev.randyapps.lapse.ui.settings.SettingsRoute
 
 object HomeDestination {
     const val ROUTE = "home"
+}
+
+object SettingsDestination {
+    const val ROUTE = "settings"
 }
 
 object EditDestination {
@@ -78,9 +83,7 @@ fun LapseNavHost(
         composable(HomeDestination.ROUTE) {
             HomeRoute(
                 onAddClick = { navController.navigate(EditDestination.forNewItem()) },
-                // Settings arrives in its own stage; deliberately inert rather than wired to a
-                // placeholder destination.
-                onSettingsClick = {},
+                onSettingsClick = { navController.navigate(SettingsDestination.ROUTE) },
                 onItemClick = { item -> navController.navigate(EditDestination.forItem(item.id)) },
                 onQuickPick = { pick ->
                     navController.navigate(EditDestination.forQuickPick(pick))
@@ -102,6 +105,10 @@ fun LapseNavHost(
             ),
         ) {
             EditRoute(onClose = { navController.popBackStack() })
+        }
+
+        composable(SettingsDestination.ROUTE) {
+            SettingsRoute(onClose = { navController.popBackStack() })
         }
     }
 }

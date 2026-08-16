@@ -40,6 +40,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // Needed for the version name shown on the About section.
+        buildConfig = true
     }
 }
 
@@ -63,6 +65,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 

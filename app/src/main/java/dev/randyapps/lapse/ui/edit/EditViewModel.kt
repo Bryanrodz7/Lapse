@@ -8,11 +8,13 @@ import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.data.model.Category
 import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.QuickPick
+import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.notifications.NotificationPermissionStore
 import dev.randyapps.lapse.ui.nav.EditDestination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -25,6 +27,7 @@ class EditViewModel @Inject constructor(
     private val repository: ItemRepository,
     private val clock: Clock,
     private val permissionStore: NotificationPermissionStore,
+    private val settingsStore: SettingsStore,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -42,13 +45,27 @@ class EditViewModel @Inject constructor(
     init {
         val today = LocalDate.now(clock)
         if (itemId == ItemDraft.NEW_ITEM_ID) {
+            newItem(today)
+        } else {
+            loadExisting(today)
+        }
+    }
+
+    private fun newItem(today: LocalDate) {
+        viewModelScope.launch {
+            // Read the configured defaults before marking the form ready, so the reminder chips
+            // never flash the built-in set and then change under the user.
+            val defaults = settingsStore.settings.first().defaultReminderDays
             val base = EditUiState(
                 today = today,
                 // A year out is the single most common renewal term, so the form opens with a
                 // usable date already in place rather than demanding one.
                 expiryDate = today.plusYears(1),
+                reminderDaysBefore = defaults,
                 ready = true,
             )
+            // A quick pick carries its own reminder set, which is more specific than the
+            // defaults, so it wins.
             _state.value = initialQuickPick?.let { pick ->
                 val draft = pick.toDraft(today)
                 base.copy(
@@ -58,8 +75,6 @@ class EditViewModel @Inject constructor(
                     reminderDaysBefore = draft.reminderDaysBefore,
                 )
             } ?: base
-        } else {
-            loadExisting(today)
         }
     }
 

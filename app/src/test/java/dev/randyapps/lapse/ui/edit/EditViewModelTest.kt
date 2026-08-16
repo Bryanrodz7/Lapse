@@ -7,6 +7,9 @@ import dev.randyapps.lapse.data.db.ItemEntity
 import dev.randyapps.lapse.data.model.Category
 import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.QuickPick
+import dev.randyapps.lapse.data.settings.LapseSettings
+import dev.randyapps.lapse.data.settings.SettingsStore
+import dev.randyapps.lapse.data.settings.ThemeMode
 import dev.randyapps.lapse.notifications.NotificationPermissionStore
 import dev.randyapps.lapse.ui.nav.EditDestination
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +18,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -43,6 +47,19 @@ class EditViewModelTest {
 
     private var permissionStore = FakePermissionStore()
 
+    private class FakeSettingsStore(initial: LapseSettings = LapseSettings()) : SettingsStore {
+        private val state = MutableStateFlow(initial)
+        override val settings = state
+        override suspend fun setDefaultReminderDays(days: List<Int>) {
+            state.value = state.value.copy(defaultReminderDays = days)
+        }
+        override suspend fun setThemeMode(mode: ThemeMode) {
+            state.value = state.value.copy(themeMode = mode)
+        }
+    }
+
+    private var settingsStore = FakeSettingsStore()
+
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)
 
@@ -59,6 +76,7 @@ class EditViewModelTest {
             repository = repository,
             clock = clock,
             permissionStore = permissionStore,
+            settingsStore = settingsStore,
             savedStateHandle = SavedStateHandle(
                 mapOf(
                     EditDestination.ARG_ITEM_ID to itemId,
@@ -89,6 +107,7 @@ class EditViewModelTest {
     @Test
     fun `a new item opens ready, dated a year out, and cannot be saved blank`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         val state = vm.state.value
 
         assertTrue(state.isNew)
@@ -98,8 +117,38 @@ class EditViewModelTest {
     }
 
     @Test
+    fun `a new item uses the reminder defaults from settings`() = runTest {
+        settingsStore = FakeSettingsStore(LapseSettings(defaultReminderDays = listOf(90, 14)))
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        assertEquals(listOf(90, 14), vm.state.value.reminderDaysBefore)
+    }
+
+    @Test
+    fun `a quick pick's own reminders beat the settings defaults`() = runTest {
+        // The pick is the more specific choice, so it must win.
+        settingsStore = FakeSettingsStore(LapseSettings(defaultReminderDays = listOf(90, 14)))
+        val vm = viewModel(quickPick = QuickPick.PASSPORT.name)
+        advanceUntilIdle()
+
+        assertEquals(listOf(180, 90, 30), vm.state.value.reminderDaysBefore)
+    }
+
+    @Test
+    fun `editing an existing item ignores the settings defaults`() = runTest {
+        // Changing a default must not silently rewrite reminders on items already saved.
+        settingsStore = FakeSettingsStore(LapseSettings(defaultReminderDays = listOf(90, 14)))
+        val vm = viewModel(4, listOf(entity(4, "Passport", today.plusDays(200))))
+        advanceUntilIdle()
+
+        assertEquals(listOf(30, 7), vm.state.value.reminderDaysBefore)
+    }
+
+    @Test
     fun `a whitespace-only name does not count as a name`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onNameChange("   ")
         assertFalse(vm.state.value.canSave)
     }
@@ -107,6 +156,7 @@ class EditViewModelTest {
     @Test
     fun `a quick pick fills name, category, reminders and date in one tap`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onQuickPick(QuickPick.PASSPORT)
 
         val state = vm.state.value
@@ -120,6 +170,7 @@ class EditViewModelTest {
     @Test
     fun `saving a new item persists it and closes the screen`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onQuickPick(QuickPick.CAR_INSURANCE)
         vm.onSave()
         advanceUntilIdle()
@@ -133,6 +184,7 @@ class EditViewModelTest {
     @Test
     fun `saving trims the name and drops a blank note`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onNameChange("  Passport  ")
         vm.onNoteChange("   ")
         vm.onSave()
@@ -146,6 +198,7 @@ class EditViewModelTest {
     @Test
     fun `save is a no-op while the name is blank`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onSave()
         advanceUntilIdle()
 
@@ -156,6 +209,7 @@ class EditViewModelTest {
     @Test
     fun `reminders toggle off and on, staying sorted`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onToggleReminder(7)
         assertFalse(7 in vm.state.value.reminderDaysBefore)
 
@@ -166,6 +220,7 @@ class EditViewModelTest {
     @Test
     fun `date shortcuts set a date relative to today`() = runTest {
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onExpiryDateChange(today.plusYears(5))
         assertEquals(today.plusYears(5), vm.state.value.expiryDate)
     }
@@ -173,6 +228,7 @@ class EditViewModelTest {
     @Test
     fun `opening from an empty-state quick pick arrives pre-filled and ready to save`() = runTest {
         val vm = viewModel(quickPick = QuickPick.VEHICLE_REGISTRATION.name)
+        advanceUntilIdle()
         val state = vm.state.value
 
         assertEquals("Vehicle Registration", state.name)
@@ -186,6 +242,7 @@ class EditViewModelTest {
     fun `an unknown quick pick name is ignored rather than crashing`() = runTest {
         // Guards against a stale deep link or a renamed enum constant.
         val vm = viewModel(quickPick = "NOT_A_REAL_PICK")
+        advanceUntilIdle()
         assertEquals("", vm.state.value.name)
         assertTrue(vm.state.value.ready)
     }
@@ -233,6 +290,7 @@ class EditViewModelTest {
     fun `saving the first item asks for notification permission before closing`() = runTest {
         permissionStore = FakePermissionStore(hasAsked = false)
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onNameChange("Passport")
         vm.onSave()
         advanceUntilIdle()
@@ -247,6 +305,7 @@ class EditViewModelTest {
     fun `the permission prompt is never shown twice`() = runTest {
         permissionStore = FakePermissionStore(hasAsked = true)
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onNameChange("Passport")
         vm.onSave()
         advanceUntilIdle()
@@ -259,6 +318,7 @@ class EditViewModelTest {
     fun `declining the permission still saves and closes`() = runTest {
         permissionStore = FakePermissionStore(hasAsked = false)
         val vm = viewModel()
+        advanceUntilIdle()
         vm.onNameChange("Passport")
         vm.onSave()
         advanceUntilIdle()
@@ -274,7 +334,9 @@ class EditViewModelTest {
 
     @Test
     fun `renew is not offered on a new item`() = runTest {
-        assertFalse(viewModel().state.value.canRenew)
+        val vm = viewModel()
+        advanceUntilIdle()
+        assertFalse(vm.state.value.canRenew)
     }
 
     @Test
