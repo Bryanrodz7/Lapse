@@ -1,6 +1,7 @@
 package dev.randyapps.lapse.debug
 
 import android.content.Context
+import androidx.core.content.edit
 import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.data.model.Category
 import dev.randyapps.lapse.data.model.ItemDraft
@@ -28,19 +29,19 @@ object DemoSeed {
         if (repository.getAllItems().isEmpty()) {
             drafts(LocalDate.now()).forEach { repository.save(it) }
         }
-        prefs.edit().putBoolean(KEY_SEEDED, true).apply()
+        prefs.edit { putBoolean(KEY_SEEDED, true) }
     }
 
     /** Spans every status and all four sections, including the 0-day and expired edges. */
     private fun drafts(today: LocalDate): List<ItemDraft> = listOf(
         draft("Driver's License", Category.ID_AND_LICENSE, today, 0, listOf(30, 7, 1)),
-        draft("Vehicle inspection", Category.VEHICLE, today, 4, listOf(30, 7)),
-        draft("Car insurance", Category.INSURANCE, today, 23, listOf(30, 7)),
+        draft("Vehicle Inspection", Category.VEHICLE, today, 4, listOf(30, 7)),
+        draft("Car Insurance", Category.INSURANCE, today, 23, listOf(30, 7)),
         draft("Passport", Category.ID_AND_LICENSE, today, 61, listOf(90, 30)),
-        draft("Dentist check-up", Category.HEALTH, today, 88, listOf(14)),
-        draft("First aid certificate", Category.WORK_AND_CERTS, today, 240, listOf(60, 14)),
-        draft("Boiler service", Category.HOME, today, -12, listOf(30, 7)),
-        draft("Gym membership", Category.SUBSCRIPTION, today, -95, listOf(7)),
+        draft("Dentist Check-up", Category.HEALTH, today, 88, listOf(14)),
+        draft("First Aid Certificate", Category.WORK_AND_CERTS, today, 240, listOf(60, 14)),
+        draft("Boiler Service", Category.HOME, today, -12, listOf(30, 7)),
+        draft("Gym Membership", Category.SUBSCRIPTION, today, -95, listOf(7)),
     )
 
     private fun draft(

@@ -11,8 +11,14 @@
     <string name="section_next_3_months">Next 3 months</string>
     <string name="section_later">Later</string>
     <string name="section_expired">Expired</string>
-    <string name="cd_expired_section_collapsed">Expired, %1$d items, collapsed. Tap to expand.</string>
-    <string name="cd_expired_section_expanded">Expired, %1$d items, expanded. Tap to collapse.</string>
+    <plurals name="cd_expired_section_collapsed">
+        <item quantity="one">Expired, %1$d item, collapsed. Tap to expand.</item>
+        <item quantity="other">Expired, %1$d items, collapsed. Tap to expand.</item>
+    </plurals>
+    <plurals name="cd_expired_section_expanded">
+        <item quantity="one">Expired, %1$d item, expanded. Tap to collapse.</item>
+        <item quantity="other">Expired, %1$d items, expanded. Tap to collapse.</item>
+    </plurals>
 
     <!-- Days remaining -->
     <string name="expires_today">Today</string>
@@ -36,7 +42,6 @@
         <item quantity="one">%1$s, %2$s, expired %3$d day ago, on %4$s</item>
         <item quantity="other">%1$s, %2$s, expired %3$d days ago, on %4$s</item>
     </plurals>
-    <string name="cd_swipe_to_delete">Swipe to delete</string>
     <string name="action_delete">Delete</string>
 
     <!-- Undo -->

@@ -1,6 +1,7 @@
 package dev.randyapps.lapse.notifications
 
 import android.content.Context
+import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,7 +30,7 @@ class SharedPrefsNotificationPermissionStore @Inject constructor(
     override var hasAsked: Boolean
         get() = prefs.getBoolean(KEY_ASKED, false)
         set(value) {
-            prefs.edit().putBoolean(KEY_ASKED, value).apply()
+            prefs.edit { putBoolean(KEY_ASKED, value) }
         }
 
     private companion object {

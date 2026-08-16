@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
+import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -97,11 +98,9 @@ class InternalPhotoStore @Inject constructor(
         if (longest <= MAX_DIMENSION) return bitmap
 
         val ratio = MAX_DIMENSION.toFloat() / longest
-        val scaled = Bitmap.createScaledBitmap(
-            bitmap,
+        val scaled = bitmap.scale(
             (bitmap.width * ratio).roundToInt().coerceAtLeast(1),
             (bitmap.height * ratio).roundToInt().coerceAtLeast(1),
-            true,
         )
         if (scaled !== bitmap) bitmap.recycle()
         return scaled

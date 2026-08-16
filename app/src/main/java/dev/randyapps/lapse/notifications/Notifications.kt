@@ -1,6 +1,7 @@
 package dev.randyapps.lapse.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -99,6 +100,9 @@ object Notifications {
             .build()
 
         // Distinct id per item so several reminders don't overwrite each other.
+        // canPost() above already gates this; the annotation tells lint so, since it cannot
+        // follow the check across a function boundary.
+        @SuppressLint("MissingPermission")
         NotificationManagerCompat.from(context).notify(item.id.toInt(), notification)
     }
 }

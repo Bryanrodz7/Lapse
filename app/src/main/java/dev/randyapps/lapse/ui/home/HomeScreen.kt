@@ -4,12 +4,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Settings
@@ -148,6 +149,9 @@ fun HomeScreen(
     }
 }
 
+/** Kept inside the 300ms budget, like every other movement in the app. */
+private const val ROW_MOVE_MS = 250
+
 @Composable
 private fun ItemList(
     groups: List<ItemGroup>,
@@ -198,7 +202,17 @@ private fun ItemList(
             itemsIndexed(group.items) { _, item ->
                 // No divider: spacing alone separates rows, consistent with the no-boxes
                 // direction. Row padding was increased to carry that.
-                StaggeredEntry(index = entryIndex[item.id] ?: 0) {
+                //
+                // animateItem slides a row to its new position when the sort order changes, so
+                // saving an edit that moves an item earlier reads as movement rather than a jump.
+                StaggeredEntry(
+                    index = entryIndex[item.id] ?: 0,
+                    modifier = Modifier.animateItem(
+                        placementSpec = tween(ROW_MOVE_MS),
+                        fadeInSpec = tween(ROW_MOVE_MS),
+                        fadeOutSpec = tween(ROW_MOVE_MS),
+                    ),
+                ) {
                     SwipeableRow(
                         item = item,
                         onClick = { onItemClick(item) },
@@ -213,7 +227,7 @@ private fun ItemList(
 /** Keyed by item id so a delete animates the right row out and undo returns it in place. */
 private fun androidx.compose.foundation.lazy.LazyListScope.itemsIndexed(
     items: List<Item>,
-    row: @Composable (Int, Item) -> Unit,
+    row: @Composable LazyItemScope.(Int, Item) -> Unit,
 ) {
     items.forEachIndexed { index, item ->
         item(key = "item-${item.id}") { row(index, item) }

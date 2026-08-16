@@ -10,6 +10,7 @@ import java.time.Clock
 import java.time.Duration
 import java.time.LocalTime
 import java.time.ZonedDateTime
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -53,7 +54,9 @@ class WorkManagerReminderScheduler @Inject constructor(
 
             val delay = Duration.between(now, fireAt)
             val request = OneTimeWorkRequestBuilder<ReminderWorker>()
-                .setInitialDelay(delay)
+                // The Duration overload is @RequiresApi(26) and minSdk is 24. Desugaring covers
+                // java.time itself, but not WorkManager's API gate, so use the millis overload.
+                .setInitialDelay(delay.toMillis(), TimeUnit.MILLISECONDS)
                 .addTag(tagFor(item.id))
                 .setInputData(
                     Data.Builder()

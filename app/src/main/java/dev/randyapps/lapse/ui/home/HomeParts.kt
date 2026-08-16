@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -65,8 +66,9 @@ fun ExpiredSectionHeader(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val description = stringResource(
-        if (expanded) R.string.cd_expired_section_expanded else R.string.cd_expired_section_collapsed,
+    val description = pluralStringResource(
+        if (expanded) R.plurals.cd_expired_section_expanded else R.plurals.cd_expired_section_collapsed,
+        count,
         count,
     )
     Row(
@@ -107,6 +109,7 @@ fun ExpiredSectionHeader(
 @Composable
 fun StaggeredEntry(
     index: Int,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val delay = (index * 28).coerceAtMost(200)
@@ -121,7 +124,7 @@ fun StaggeredEntry(
         label = "row-entry",
     )
     Box(
-        modifier = Modifier.graphicsLayer {
+        modifier = modifier.graphicsLayer {
             alpha = progress
             translationY = (1f - progress) * 16.dp.toPx()
         }

@@ -33,12 +33,12 @@ private fun previewItem(
 /** Covers every status, including the two that are easy to get wrong: 0 days and expired. */
 private val PreviewItems = listOf(
     previewItem(1, "Driver's License", Category.ID_AND_LICENSE, 0),
-    previewItem(2, "Vehicle inspection", Category.VEHICLE, 4),
-    previewItem(3, "Car insurance", Category.INSURANCE, 23),
+    previewItem(2, "Vehicle Inspection", Category.VEHICLE, 4),
+    previewItem(3, "Car Insurance", Category.INSURANCE, 23),
     previewItem(4, "Passport", Category.ID_AND_LICENSE, 61),
-    previewItem(5, "First aid certificate", Category.WORK_AND_CERTS, 240),
-    previewItem(6, "Boiler service", Category.HOME, -12),
-    previewItem(7, "Gym membership", Category.SUBSCRIPTION, -95),
+    previewItem(5, "First Aid Certificate", Category.WORK_AND_CERTS, 240),
+    previewItem(6, "Boiler Service", Category.HOME, -12),
+    previewItem(7, "Gym Membership", Category.SUBSCRIPTION, -95),
 )
 
 private val PopulatedState = HomeUiState(
