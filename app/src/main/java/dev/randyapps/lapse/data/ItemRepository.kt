@@ -23,6 +23,7 @@ import javax.inject.Singleton
 class ItemRepository @Inject constructor(
     private val dao: ItemDao,
     private val clock: Clock,
+    private val reminders: ReminderScheduler = NoOpReminderScheduler,
 ) {
 
     fun observeItems(): Flow<List<Item>> =
@@ -46,16 +47,30 @@ class ItemRepository @Inject constructor(
         } else {
             dao.getById(draft.id)?.createdAt ?: clock.instant()
         }
-        return dao.upsert(draft.toEntity(createdAt))
+        val id = dao.upsert(draft.toEntity(createdAt))
+        // Rescheduling here rather than at the call sites is what stops an edit from leaving
+        // reminders pointing at the old date.
+        getItem(id)?.let { reminders.schedule(it) }
+        return id
     }
 
-    suspend fun delete(id: Long) = dao.deleteById(id)
+    suspend fun delete(id: Long) {
+        dao.deleteById(id)
+        reminders.cancel(id)
+    }
 
     /**
      * Puts a deleted item back with its original id and creation time, so undo restores the
      * item rather than making a lookalike copy.
      */
-    suspend fun restore(item: Item): Long = dao.upsert(item.toEntity())
+    suspend fun restore(item: Item): Long {
+        val id = dao.upsert(item.toEntity())
+        getItem(id)?.let { reminders.schedule(it) }
+        return id
+    }
+
+    /** Rebuilds every reminder from scratch — used after a reboot. */
+    suspend fun rescheduleAllReminders() = reminders.rescheduleAll(getAllItems())
 
     private fun today(): LocalDate = LocalDate.now(clock)
 }

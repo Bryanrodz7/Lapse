@@ -1,5 +1,9 @@
 package dev.randyapps.lapse.di
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dev.randyapps.lapse.data.ItemRepository
@@ -33,19 +37,31 @@ class DependencyGraphTest {
     @Inject lateinit var repository: ItemRepository
     @Inject lateinit var database: LapseDatabase
     @Inject lateinit var clock: Clock
+    @Inject lateinit var reminderScheduler: dev.randyapps.lapse.data.ReminderScheduler
 
     // A second injection point for the same bindings, to verify @Singleton actually holds.
     @Inject lateinit var repositoryAgain: ItemRepository
     @Inject lateinit var databaseAgain: LapseDatabase
 
     @Before
-    fun inject() = hiltRule.inject()
+    fun inject() {
+        // The manifest removes WorkManager's on-startup initialiser so LapseApp can supply the
+        // Hilt worker factory. Instrumented tests run against HiltTestApplication, which is not
+        // a Configuration.Provider, so WorkManager has to be initialised here or resolving the
+        // graph throws "WorkManager is not initialized properly".
+        WorkManagerTestInitHelper.initializeTestWorkManager(
+            ApplicationProvider.getApplicationContext(),
+            Configuration.Builder().setExecutor(SynchronousExecutor()).build(),
+        )
+        hiltRule.inject()
+    }
 
     @Test
     fun everyDependencyResolves() {
         assertNotNull(repository)
         assertNotNull(database)
         assertNotNull(clock)
+        assertNotNull(reminderScheduler)
     }
 
     @Test
