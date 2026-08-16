@@ -27,6 +27,7 @@ class ItemRepository @Inject constructor(
     private val clock: Clock,
     private val reminders: ReminderScheduler = NoOpReminderScheduler,
     private val photos: PhotoStore = NoOpPhotoStore,
+    private val itemChanges: ItemChangeNotifier = NoOpItemChangeNotifier,
 ) {
 
     fun observeItems(): Flow<List<Item>> =
@@ -63,6 +64,7 @@ class ItemRepository @Inject constructor(
         if (previousPhoto != null && previousPhoto != draft.photoPath) {
             photos.delete(previousPhoto)
         }
+        itemChanges.onItemsChanged()
         return id
     }
 
@@ -73,6 +75,7 @@ class ItemRepository @Inject constructor(
     suspend fun delete(id: Long) {
         dao.deleteById(id)
         reminders.cancel(id)
+        itemChanges.onItemsChanged()
     }
 
     /** Called when an undoable delete finally expires. */
@@ -85,6 +88,7 @@ class ItemRepository @Inject constructor(
     suspend fun restore(item: Item): Long {
         val id = dao.upsert(item.toEntity())
         getItem(id)?.let { reminders.schedule(it) }
+        itemChanges.onItemsChanged()
         return id
     }
 

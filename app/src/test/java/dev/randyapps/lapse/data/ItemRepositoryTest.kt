@@ -8,6 +8,7 @@ import dev.randyapps.lapse.data.model.ItemStatus
 import dev.randyapps.lapse.data.model.Item
 import dev.randyapps.lapse.data.model.toDraft
 import dev.randyapps.lapse.data.photo.PhotoStore
+import org.junit.Assert.assertTrue
 import android.net.Uri
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -63,13 +64,20 @@ class ItemRepositoryTest {
         override suspend fun delete(path: String?) { deleted += path }
     }
 
+    private class RecordingChangeNotifier : ItemChangeNotifier {
+        var changes = 0
+        override suspend fun onItemsChanged() { changes++ }
+    }
+
     private lateinit var scheduler: RecordingScheduler
     private lateinit var photos: RecordingPhotoStore
+    private lateinit var changes: RecordingChangeNotifier
 
     private fun repository(vararg entities: ItemEntity): ItemRepository {
         scheduler = RecordingScheduler()
         photos = RecordingPhotoStore()
-        return ItemRepository(FakeItemDao(entities.toList()), clock, scheduler, photos)
+        changes = RecordingChangeNotifier()
+        return ItemRepository(FakeItemDao(entities.toList()), clock, scheduler, photos, changes)
     }
 
     @Test
@@ -330,5 +338,50 @@ class ItemRepositoryTest {
         repo.purgePhotoFor(item)
 
         assertEquals(listOf("/p/gone.jpg"), photos.deleted)
+    }
+
+    // --- widget refresh ---
+
+    @Test
+    fun `saving notifies that items changed so the widget redraws`() = runTest {
+        val repo = repository()
+        repo.save(
+            ItemDraft(
+                name = "Passport",
+                category = Category.ID_AND_LICENSE,
+                expiryDate = today.plusDays(30),
+                reminderDaysBefore = emptyList(),
+            )
+        )
+        assertEquals(1, changes.changes)
+    }
+
+    @Test
+    fun `deleting and restoring both notify`() = runTest {
+        val repo = repository(entity(4, "Passport", today.plusDays(30)))
+        val item = repo.getItem(4)!!
+        repo.delete(4)
+        repo.restore(item)
+
+        // Delete then restore: the widget must not be left showing a deleted item.
+        assertEquals(2, changes.changes)
+    }
+
+    @Test
+    fun `the widget's next item is the soonest by date, expired included`() = runTest {
+        // The widget shows minByOrNull { expiryDate }; an expired item is shown as expired
+        // rather than skipped in favour of the next active one.
+        val repo = repository(
+            entity(1, "Active", today.plusDays(10)),
+            entity(2, "Expired", today.minusDays(3)),
+        )
+        val next = repo.getAllItems().minByOrNull { it.expiryDate }!!
+        assertEquals("Expired", next.name)
+        assertTrue(next.daysRemaining < 0)
+    }
+
+    @Test
+    fun `with nothing tracked the widget has no item to show`() = runTest {
+        assertEquals(null, repository().getAllItems().minByOrNull { it.expiryDate })
     }
 }

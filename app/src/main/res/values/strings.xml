@@ -123,6 +123,14 @@
     <string name="settings_privacy_options_hint">Change or withdraw your consent for personalised ads.</string>
     <string name="settings_font_credit">Set in Instrument Serif, used under the SIL Open Font License.</string>
 
+    <!-- Widget -->
+    <string name="widget_description">The next thing you are tracking, and how long you have.</string>
+    <string name="widget_empty_headline">Nothing is about to lapse.</string>
+    <string name="widget_empty_action">Tap to add something</string>
+    <string name="widget_preview_name">Passport</string>
+    <string name="widget_preview_days">23</string>
+    <string name="widget_preview_label">DAYS LEFT</string>
+
     <!-- Categories -->
     <string name="category_id_and_license">ID &amp; license</string>
     <string name="category_vehicle">Vehicle</string>

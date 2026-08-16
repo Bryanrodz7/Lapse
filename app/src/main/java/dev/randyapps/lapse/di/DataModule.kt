@@ -16,6 +16,7 @@ import dev.randyapps.lapse.ads.AdsState
 import dev.randyapps.lapse.ads.ConsentManager
 import dev.randyapps.lapse.ads.ConsentOptions
 import dev.randyapps.lapse.ads.DefaultAdsState
+import dev.randyapps.lapse.data.ItemChangeNotifier
 import dev.randyapps.lapse.data.ReminderScheduler
 import dev.randyapps.lapse.data.db.ItemDao
 import dev.randyapps.lapse.data.db.LapseDatabase
@@ -26,6 +27,7 @@ import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.notifications.NotificationPermissionStore
 import dev.randyapps.lapse.notifications.SharedPrefsNotificationPermissionStore
 import dev.randyapps.lapse.notifications.WorkManagerReminderScheduler
+import dev.randyapps.lapse.widget.WidgetItemChangeNotifier
 import java.time.Clock
 import javax.inject.Singleton
 
@@ -88,6 +90,12 @@ object DataModule {
     @Provides
     @Singleton
     fun provideSettingsStore(store: DataStoreSettingsStore): SettingsStore = store
+
+    @Provides
+    @Singleton
+    fun provideItemChangeNotifier(
+        notifier: WidgetItemChangeNotifier,
+    ): ItemChangeNotifier = notifier
 
     @Provides
     @Singleton

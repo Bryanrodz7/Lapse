@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hand-tuned dark values from ui/theme/Color.kt, not inversions of the light ones. -->
+<resources>
+    <color name="widget_background">#14120F</color>
+    <color name="widget_on_background">#F1ECE3</color>
+    <color name="widget_muted">#9E9487</color>
+
+    <color name="widget_preview_accent">#D8A65A</color>
+</resources>

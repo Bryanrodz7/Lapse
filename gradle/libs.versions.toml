@@ -18,6 +18,9 @@ room = "2.8.4"
 desugarJdkLibs = "2.1.5"
 coroutines = "1.10.2"
 androidxTestCore = "1.7.0"
+# 1.2.x is the first release with the widget testing artifact, which is how the widget's
+# rendered content is asserted rather than eyeballed.
+glance = "1.2.0-rc01"
 hilt = "2.60.1"
 androidxHilt = "1.4.0"
 
@@ -52,6 +55,9 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 android-desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
+androidx-glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
+androidx-glance-appwidget-testing = { group = "androidx.glance", name = "glance-appwidget-testing", version.ref = "glance" }
 user-messaging-platform = { group = "com.google.android.ump", name = "user-messaging-platform", version = "4.0.0" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version = "25.4.0" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version = "1.4.1" }

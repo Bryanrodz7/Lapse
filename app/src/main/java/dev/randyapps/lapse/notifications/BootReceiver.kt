@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import dagger.hilt.android.AndroidEntryPoint
 import dev.randyapps.lapse.data.ItemRepository
+import dev.randyapps.lapse.widget.WidgetRefreshScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -37,6 +38,10 @@ class BootReceiver : BroadcastReceiver() {
         scope.launch {
             try {
                 repository.rescheduleAllReminders()
+                // A reboot also clears the widget's periodic work and leaves it showing a day
+                // count from before the restart.
+                WidgetRefreshScheduler.scheduleDailyRefresh(context)
+                WidgetRefreshScheduler.notifyDataChanged(context)
             } finally {
                 pending.finish()
             }

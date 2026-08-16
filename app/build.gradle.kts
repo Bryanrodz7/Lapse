@@ -69,6 +69,8 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.play.services.ads)
     implementation(libs.user.messaging.platform)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     implementation(libs.androidx.hilt.work)
     ksp(libs.androidx.hilt.compiler)
 
@@ -92,6 +94,7 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.hilt.android.testing)
     androidTestImplementation(libs.androidx.work.testing)
+    androidTestImplementation(libs.androidx.glance.appwidget.testing)
     kspAndroidTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

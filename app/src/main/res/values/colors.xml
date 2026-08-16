@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Colours live in ui/theme/Color.kt; this file exists only for the launcher background. -->
+<!--
+  Colours for the widget's preview and loading layouts, which are plain XML and cannot read
+  Kotlin values. The night variants in values-night/ are picked up automatically.
+
+  The widget itself does not use these: its palette comes from LapseWidgetTheme.
+-->
 <resources>
+    <color name="widget_background">#FAF7F2</color>
+    <color name="widget_on_background">#1E1A15</color>
+    <color name="widget_muted">#6E6559</color>
+
+    <!-- The amber used by the sample "23 days" in the picker preview. -->
+    <color name="widget_preview_accent">#A9762B</color>
 </resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  updatePeriodMillis is 0 on purpose. The system's own periodic update is capped at 30 minutes
+  and would be pure polling; the widget is instead pushed on item changes and refreshed once a
+  day just after midnight by WidgetRefreshScheduler.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/widget_loading"
+    android:minWidth="110dp"
+    android:minHeight="70dp"
+    android:previewLayout="@layout/widget_preview"
+    android:previewImage="@drawable/widget_preview_image"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

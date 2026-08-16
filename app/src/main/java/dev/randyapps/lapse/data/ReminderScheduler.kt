@@ -27,3 +27,15 @@ object NoOpReminderScheduler : ReminderScheduler {
     override fun cancel(itemId: Long) = Unit
     override suspend fun rescheduleAll(items: List<Item>) = Unit
 }
+
+/**
+ * Told whenever stored items change, so surfaces outside the app (the home-screen widget) can
+ * redraw. An interface for the same reason as the scheduler: the implementation needs a Context.
+ */
+interface ItemChangeNotifier {
+    suspend fun onItemsChanged()
+}
+
+object NoOpItemChangeNotifier : ItemChangeNotifier {
+    override suspend fun onItemsChanged() = Unit
+}
