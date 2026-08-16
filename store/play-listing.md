@@ -64,16 +64,18 @@ Lapse is free and shows one banner at the bottom of the main list. There are no 
 
 Those ads are served by Google and are personalised, which means Google receives your device's advertising ID. Where consent is required, Lapse asks before a single ad is requested, and you can change or withdraw that choice at any time from Settings. Nothing you track is ever shared with advertisers.
 
-Privacy policy: PRIVACY_POLICY_URL
+Privacy policy: https://bryanrodz7.github.io/Lapse/privacy-policy/
 ```
 
 ---
 
 ## Notes before you publish
 
-- **PRIVACY_POLICY_URL** is a placeholder. Replace it with the hosted URL of
-  `docs/privacy-policy.md`. GitHub Pages will not serve it while the repository is private on a
-  free plan.
+- The **privacy policy** is live at <https://bryanrodz7.github.io/Lapse/privacy-policy/>, served by
+  GitHub Pages from `docs/` on `main`. The same URL goes in the Play Console's dedicated privacy
+  policy field — the line in the description above does not satisfy that requirement on its own.
+  It is generated from `docs/privacy-policy.md`, so edit that file and push; never edit the
+  published page anywhere else, or the two will drift.
 - The description says ads are **personalised**. That matches the current build. If you ever
   reverse that decision, this copy and the privacy policy both have to change with it.
 - Spelling is US English (`license`) for the app's own terms, matching the in-app strings.

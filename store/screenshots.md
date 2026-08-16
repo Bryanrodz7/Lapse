@@ -188,5 +188,5 @@ and the FAB correctly hides.
 
 - **Feature graphic** 1024 × 500 — not generated yet
 - **Real AdMob app ID + unit ID** — still the test IDs (`AdIds.kt` and the manifest `meta-data`)
-- **Privacy policy URL** — pending Pages being enabled (see below)
+- ~~Privacy policy URL~~ — done: <https://bryanrodz7.github.io/Lapse/privacy-policy/>
 - **Upload keystore** — you create it; command is in `store/play-listing.md`
