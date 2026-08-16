@@ -1,9 +1,25 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
 }
+
+/**
+ * Release signing credentials, kept out of the repository.
+ *
+ * keystore.properties and the keystore itself are gitignored and must never be committed. When
+ * the file is absent — a fresh clone, or CI without secrets — the release build still runs and
+ * simply produces an unsigned APK, rather than failing with a confusing signing error.
+ *
+ * Expected keys: storeFile, storePassword, keyAlias, keyPassword.
+ */
+val keystorePropertiesFile: File = rootProject.file("keystore.properties")
+val keystoreProperties: Properties? = keystorePropertiesFile
+    .takeIf { it.exists() }
+    ?.let { file -> Properties().apply { file.inputStream().use(::load) } }
 
 android {
     namespace = "dev.randyapps.lapse"
@@ -24,8 +40,26 @@ android {
         testInstrumentationRunner = "dev.randyapps.lapse.HiltTestRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            keystoreProperties?.let { props ->
+                // storeFile is resolved relative to the repository root, so keystore.properties
+                // can hold a path outside the project — which is where the keystore should live.
+                storeFile = rootProject.file(props.getProperty("storeFile"))
+                storePassword = props.getProperty("storePassword")
+                keyAlias = props.getProperty("keyAlias")
+                keyPassword = props.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Only attached when credentials are actually present; otherwise the build would
+            // fail on an empty signing config instead of producing an unsigned APK.
+            if (keystoreProperties != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             optimization {
                 enable = false
             }
