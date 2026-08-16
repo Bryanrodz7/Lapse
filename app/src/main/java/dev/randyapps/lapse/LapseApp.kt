@@ -7,6 +7,7 @@ import dagger.hilt.android.HiltAndroidApp
 import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.debug.DemoSeed
 import dev.randyapps.lapse.notifications.Notifications
+import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,5 +34,7 @@ class LapseApp : Application(), Configuration.Provider {
         Notifications.ensureChannel(this)
         // No-op in release builds — see the two DemoSeed variants.
         appScope.launch { DemoSeed.seedIfNeeded(this@LapseApp, repository) }
+        // Initialisation does disk and network I/O, so it must not run on the main thread.
+        appScope.launch { MobileAds.initialize(this@LapseApp) }
     }
 }

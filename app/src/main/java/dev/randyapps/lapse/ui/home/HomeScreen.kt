@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.randyapps.lapse.R
+import dev.randyapps.lapse.ads.AnchoredAdBanner
 import dev.randyapps.lapse.data.model.ExpirySection
 import dev.randyapps.lapse.data.model.Item
 import dev.randyapps.lapse.data.model.QuickPick
@@ -61,6 +62,11 @@ fun HomeScreen(
     onUndoDelete: () -> Unit,
     onUndoWindowClosed: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Whether the banner is shown at all. False removes it and the space it reserved, which is
+     * the single switch a future "remove ads" purchase flips.
+     */
+    adsEnabled: Boolean = false,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val message = recentlyDeleted?.let { stringResource(R.string.snackbar_deleted, it.name) }
@@ -127,6 +133,9 @@ fun HomeScreen(
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        // As the bottomBar, the banner's reserved height flows into the content padding below,
+        // so the list scrolls clear of it rather than under it.
+        bottomBar = { if (adsEnabled) AnchoredAdBanner() },
     ) { padding ->
         when {
             // Blank rather than a spinner: the first read is fast enough that a spinner would

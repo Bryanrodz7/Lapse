@@ -6,18 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Lapse** is an Android app that tracks expiration and renewal dates (license, passport, registration, insurance, certs, warranties) and reminds you before they lapse. Local-only: no accounts, no cloud, no network beyond what AdMob requires.
 
-The repo is currently the Android Studio **Empty Activity template** — `MainActivity` still renders the template `Greeting`, and `ui/theme/` still holds the default purple Material palette. None of the app described below has been written yet. Do not assume any of it exists; check before referencing it.
+All three screens are built and working: Home, Add/Edit, Settings. Reminders, photos, and the theme are done. Remaining: ads (adaptive anchored banner on Home) and the home-screen widget.
 
 ## Commands
 
 Run from the project root. The Bash tool gets `./gradlew`; from PowerShell use `.\gradlew.bat`.
+
+**Run `:app:lintDebug` at the end of every stage, not just before release.** It is the only check that catches API-level violations, and `minSdk` is 24 while the code targets far newer APIs — a `@RequiresApi` call compiles and passes every test, then crashes on an old device. It has already caught exactly that (`setInitialDelay(Duration)`), plus missing-permission and accessibility issues. Treat a lint *error* as a failing build; the standing warnings are advisory version bumps.
 
 ```bash
 ./gradlew :app:assembleDebug          # build debug APK
 ./gradlew :app:installDebug           # build + install to connected device
 ./gradlew :app:testDebugUnitTest      # JVM unit tests (app/src/test)
 ./gradlew :app:connectedDebugAndroidTest  # instrumented tests (app/src/androidTest), needs a device
-./gradlew :app:lintDebug              # Android Lint
+./gradlew :app:lintDebug              # Android Lint — run this every stage
 ```
 
 Single tests:
@@ -58,14 +60,15 @@ The build uses very new tooling — AGP **9.2.1**, Gradle **9.4.1**, Kotlin **2.
 - **Instrumented tests pass while the app is dead.** The launch crash above did not fail a single test, because tests run against `HiltTestApplication` and initialize WorkManager explicitly. After any change to `LapseApp`, DI, or the manifest, install and launch the app and check `pidof` plus logcat for `FATAL EXCEPTION`. `connectedAndroidTest` also *uninstalls* the APK when it finishes, so reinstall before manual checks.
 - **Instrumented tests run under a custom `HiltTestRunner`**, set as `testInstrumentationRunner` in `defaultConfig`. `@EntryPoint` interfaces declared in `androidTest` are *not* installed into the app's real component — using `EntryPointAccessors` against the app graph fails at runtime with `ClassCastException: Cannot cast ...SingletonCImpl to <your entry point>`. Use `@HiltAndroidTest` + `HiltAndroidRule` + `@Inject` instead.
 
-## Intended architecture
-
-Written down so a future instance resuming mid-build knows the target. **None of this is implemented yet.**
+## Architecture
 
 - **MVVM.** ViewModel + `StateFlow`; screens are stateless composables taking state and lambdas. Repository sits between Room DAO and ViewModel.
 - **One Room entity**, `ItemEntity`: name, `Category` enum, `expiryDate`, `reminderDaysBefore: List<Int>`, optional note, optional internal-storage photo path, `createdAt`. DAO exposes `Flow<List<ItemEntity>>`.
 - **`daysRemaining` and status (ACTIVE / SOON / URGENT / EXPIRED) are derived at read time, never stored** — so they cannot go stale between app launches. SOON is 30 days out, URGENT is 7.
-- **Three screens only** — Home (list grouped into "This month" / "Next 3 months" / "Later" / "Expired"), Add/Edit (one form, both modes), Settings. Navigation Compose, no bottom nav. A fourth screen is out of scope.
+- **Three screens only** — Home (list grouped into "This month" / "Next 3 months" / "Later" / "Expired"), Add/Edit (one form, both modes), Settings. Navigation Compose with a shared-axis slide, no bottom nav. A fourth screen is out of scope.
+- **Stores are interfaces with an Android implementation** (`SettingsStore`, `PhotoStore`, `ReminderScheduler`, `NotificationPermissionStore`). That is what keeps every ViewModel a plain JVM test subject; the DataStore/WorkManager/file-system implementations are bound in `DataModule`. Follow the pattern for anything new that needs a `Context`.
+- **Photos** use the system Photo Picker (`PickVisualMedia`) — the app declares no media permission. Images are copied into `filesDir/photos`, downscaled to a 1600px longest edge with EXIF rotation applied. Deleting an item keeps its photo until the undo window closes, because undo must be able to restore it.
+- **Cloud backup is switched off** in `data_extraction_rules.xml`; device-to-device transfer is kept. Auto Backup would otherwise upload photos, contradicting the guarantee stated on the Settings screen.
 - **WorkManager** schedules one worker per reminder offset per item; reschedule on create/edit/delete and on `BOOT_COMPLETED`, cancelling orphans. `POST_NOTIFICATIONS` is requested when the user saves their **first** item, not at launch.
 - **Ads: adaptive anchored banner on Home only.** No interstitial, rewarded, or app-open units — do not create them. Banner height is reserved so it never shifts layout, and its visibility is gated on a single boolean so a future one-time "remove ads" purchase can hide it. Use Google's test ad unit IDs; the real ID goes in a constant with a TODO.
 

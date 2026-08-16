@@ -3,6 +3,7 @@ package dev.randyapps.lapse.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.randyapps.lapse.ads.AdsState
 import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.data.model.Item
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,25 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: ItemRepository,
+    adsState: AdsState,
 ) : ViewModel() {
+
+    /**
+     * Drives whether Home reserves space for a banner at all.
+     *
+     * Starts true, and collected eagerly. Starting false meant the banner slot appeared one
+     * frame after first composition and shoved the list up on every cold start — the exact
+     * layout shift the banner is supposed to avoid. Ads are on for everyone today, so true is
+     * the correct first frame.
+     *
+     * TODO: when billing exists, seed this from a synchronously-readable cache of the purchase,
+     * so someone who has paid never sees the space reserved even briefly.
+     */
+    val adsEnabled: StateFlow<Boolean> = adsState.adsEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = true,
+    )
 
     val uiState: StateFlow<HomeUiState> = repository.observeItems()
         .map { items -> HomeUiState(isLoading = false, groups = groupBySection(items)) }

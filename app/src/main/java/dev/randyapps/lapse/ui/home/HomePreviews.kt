@@ -59,6 +59,7 @@ private fun PreviewHome(state: HomeUiState, dark: Boolean) {
             onDelete = {},
             onUndoDelete = {},
             onUndoWindowClosed = {},
+            adsEnabled = true,
         )
     }
 }

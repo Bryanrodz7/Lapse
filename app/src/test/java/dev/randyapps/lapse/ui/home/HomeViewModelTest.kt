@@ -1,5 +1,6 @@
 package dev.randyapps.lapse.ui.home
 
+import dev.randyapps.lapse.ads.AdsState
 import dev.randyapps.lapse.data.FakeItemDao
 import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.data.db.ItemEntity
@@ -8,6 +9,7 @@ import dev.randyapps.lapse.data.model.ExpirySection
 import dev.randyapps.lapse.data.model.ItemDraft
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -55,9 +57,15 @@ class HomeViewModelTest {
 
     private lateinit var repository: ItemRepository
 
+    private class FakeAdsState(enabled: Boolean) : AdsState {
+        override val adsEnabled = flowOf(enabled)
+    }
+
+    private var adsState: AdsState = FakeAdsState(false)
+
     private fun viewModel(vararg entities: ItemEntity): HomeViewModel {
         repository = ItemRepository(FakeItemDao(entities.toList()), clock)
-        return HomeViewModel(repository)
+        return HomeViewModel(repository, adsState)
     }
 
     /**
@@ -172,6 +180,35 @@ class HomeViewModelTest {
         assertEquals(ExpirySection.EXPIRED, state().groups.last().section)
         assertEquals("Old inspection", state().groups.last().items.single().name)
         assertFalse(state().isEmpty)
+    }
+
+    @Test
+    fun `the banner slot is reserved on the very first frame`() = runTest {
+        // Starting false would appear a frame later and shove the list up on every cold start.
+        adsState = FakeAdsState(true)
+        val vm = viewModel(entity(1, "Passport", 5))
+        assertTrue("no advanceUntilIdle: this is the first frame", vm.adsEnabled.value)
+    }
+
+    @Test
+    fun `the banner follows the ads flag`() = runTest {
+        adsState = FakeAdsState(true)
+        val vm = viewModel(entity(1, "Passport", 5))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.adsEnabled.collect {} }
+        advanceUntilIdle()
+
+        assertTrue(vm.adsEnabled.value)
+    }
+
+    @Test
+    fun `a remove-ads purchase hides the banner via the single flag`() = runTest {
+        // The seam billing will plug into: flip the flag, the banner and its reserved space go.
+        adsState = FakeAdsState(false)
+        val vm = viewModel(entity(1, "Passport", 5))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.adsEnabled.collect {} }
+        advanceUntilIdle()
+
+        assertFalse(vm.adsEnabled.value)
     }
 
     @Test

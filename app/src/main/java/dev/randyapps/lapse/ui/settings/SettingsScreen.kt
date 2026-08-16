@@ -150,6 +150,7 @@ private fun About() {
         )
         // Stated plainly because it is the product's actual position, not a legal footnote.
         Text(stringResource(R.string.settings_privacy), style = body, color = muted)
+        Text(stringResource(R.string.settings_ads), style = body, color = muted)
         Text(stringResource(R.string.settings_font_credit), style = body, color = muted)
     }
 }

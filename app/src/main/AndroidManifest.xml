@@ -9,6 +9,32 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!--
+      INTERNET and ACCESS_NETWORK_STATE arrive from the Ads SDK and are the only network
+      permissions in the app.
+
+      The advertising-identifier and Privacy Sandbox permissions the SDK also merges in are
+      removed. AD_ID is a cross-app tracking identifier and TOPICS/ATTRIBUTION are interest and
+      conversion tracking; keeping them would contradict "no third-party trackers" and the
+      no-tracking promise on the Settings screen. Ads still serve without them — they are simply
+      non-personalised.
+
+      TODO (business decision): deleting these four lines re-enables personalised ads, which pay
+      more. If that trade is taken, the Settings copy must be corrected to match.
+    -->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_TOPICS"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_ATTRIBUTION"
+        tools:node="remove" />
+
     <application
         android:name=".LapseApp"
         android:allowBackup="true"
@@ -31,6 +57,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          AdMob application id. Test id while in development; see AdIds for the production
+          constant this must be swapped with before release.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
 
         <receiver
             android:name=".notifications.BootReceiver"
