@@ -5,6 +5,7 @@ import dev.randyapps.lapse.data.model.Category
 import dev.randyapps.lapse.data.model.ExpirySection
 import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.ItemStatus
+import dev.randyapps.lapse.data.model.Item
 import dev.randyapps.lapse.data.model.toDraft
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -42,8 +43,23 @@ class ItemRepositoryTest {
         createdAt = createdAt,
     )
 
-    private fun repository(vararg entities: ItemEntity) =
-        ItemRepository(FakeItemDao(entities.toList()), clock)
+    /** Records what the repository asked the scheduler to do. */
+    private class RecordingScheduler : ReminderScheduler {
+        val scheduled = mutableListOf<Item>()
+        val cancelled = mutableListOf<Long>()
+        var rescheduledAll = 0
+
+        override suspend fun schedule(item: Item) { scheduled += item }
+        override fun cancel(itemId: Long) { cancelled += itemId }
+        override suspend fun rescheduleAll(items: List<Item>) { rescheduledAll++ }
+    }
+
+    private lateinit var scheduler: RecordingScheduler
+
+    private fun repository(vararg entities: ItemEntity): ItemRepository {
+        scheduler = RecordingScheduler()
+        return ItemRepository(FakeItemDao(entities.toList()), clock, scheduler)
+    }
 
     @Test
     fun `derived status is attached on read`() = runTest {
@@ -190,5 +206,73 @@ class ItemRepositoryTest {
             listOf(ItemStatus.EXPIRED, ItemStatus.ACTIVE),
             repo.getAllItems().map { it.status },
         )
+    }
+
+    // --- reminder scheduling ---
+
+    @Test
+    fun `saving a new item schedules its reminders`() = runTest {
+        val repo = repository()
+        repo.save(
+            ItemDraft(
+                name = "Passport",
+                category = Category.ID_AND_LICENSE,
+                expiryDate = today.plusDays(400),
+                reminderDaysBefore = listOf(90, 30),
+            )
+        )
+
+        assertEquals(1, scheduler.scheduled.size)
+        assertEquals("Passport", scheduler.scheduled.single().name)
+    }
+
+    @Test
+    fun `editing an item reschedules it with the new date`() = runTest {
+        // Regression: @Upsert returns -1 for an update, so trusting its return value meant the
+        // repository looked up id -1, found nothing, and silently skipped rescheduling. The
+        // item's reminders stayed on the old date.
+        val repo = repository(entity(4, "Dentist", today.plusDays(88)))
+        val moved = repo.getItem(4)!!.toDraft().copy(expiryDate = today.plusDays(400))
+
+        repo.save(moved)
+
+        assertEquals(1, scheduler.scheduled.size)
+        assertEquals(4L, scheduler.scheduled.single().id)
+        assertEquals(today.plusDays(400), scheduler.scheduled.single().expiryDate)
+    }
+
+    @Test
+    fun `save returns the real id when editing, not the upsert return value`() = runTest {
+        val repo = repository(entity(4, "Dentist", today.plusDays(88)))
+        val id = repo.save(repo.getItem(4)!!.toDraft().copy(name = "Dentist check-up"))
+        assertEquals(4L, id)
+    }
+
+    @Test
+    fun `deleting an item cancels its reminders`() = runTest {
+        val repo = repository(entity(7, "Gym", today.plusDays(30)))
+        repo.delete(7)
+        assertEquals(listOf(7L), scheduler.cancelled)
+    }
+
+    @Test
+    fun `restoring an undone delete schedules its reminders again`() = runTest {
+        val repo = repository(entity(9, "Warranty", today.plusDays(45)))
+        val item = repo.getItem(9)!!
+        repo.delete(9)
+        repo.restore(item)
+
+        assertEquals(listOf(9L), scheduler.cancelled)
+        assertEquals(listOf(9L), scheduler.scheduled.map { it.id })
+    }
+
+    @Test
+    fun `rescheduleAllReminders hands over every item`() = runTest {
+        val repo = repository(
+            entity(1, "A", today.plusDays(10)),
+            entity(2, "B", today.plusDays(20)),
+        )
+        repo.rescheduleAllReminders()
+        assertEquals(1, scheduler.rescheduledAll)
     }
 }

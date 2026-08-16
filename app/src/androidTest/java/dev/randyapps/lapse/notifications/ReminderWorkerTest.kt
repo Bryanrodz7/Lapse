@@ -148,6 +148,31 @@ class ReminderWorkerTest {
     }
 
     @Test
+    fun theNotificationBodyShowsAFormattedDateNotAnIsoString() = runTest {
+        val id = repository.save(
+            ItemDraft(
+                name = "Car Insurance",
+                category = Category.INSURANCE,
+                expiryDate = LocalDate.of(2026, 9, 8),
+                reminderDaysBefore = listOf(30),
+            )
+        )
+        try {
+            TestListenableWorkerBuilder<ReminderWorker>(context)
+                .setWorkerFactory(workerFactory)
+                .setInputData(workDataOf(ReminderWorker.KEY_ITEM_ID to id))
+                .build()
+                .doWork()
+
+            val body = notificationManager.activeNotifications.single()
+                .notification.extras.getString("android.text")!!
+            assertEquals("Expires 8 Sep 2026", body)
+        } finally {
+            repository.delete(id)
+        }
+    }
+
+    @Test
     fun aWorkerForADeletedItemSucceedsQuietlyWithoutNotifying() = runTest {
         // Reminders outlive their items; firing a notification for something already deleted
         // would be worse than doing nothing.

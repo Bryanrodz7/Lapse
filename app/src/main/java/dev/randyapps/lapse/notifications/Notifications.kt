@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import dev.randyapps.lapse.MainActivity
 import dev.randyapps.lapse.R
 import dev.randyapps.lapse.data.model.Item
+import dev.randyapps.lapse.ui.ExpiryDateFormat
 
 object Notifications {
 
@@ -85,7 +86,13 @@ object Notifications {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(titleFor(context, item))
-            .setContentText(context.getString(R.string.notification_body, item.expiryDate))
+            // Formatted, not the raw LocalDate: toString() yields ISO "2026-09-08".
+            .setContentText(
+                context.getString(
+                    R.string.notification_body,
+                    item.expiryDate.format(ExpiryDateFormat),
+                )
+            )
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)

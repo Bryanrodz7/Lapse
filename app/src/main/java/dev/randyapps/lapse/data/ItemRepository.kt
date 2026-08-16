@@ -47,7 +47,11 @@ class ItemRepository @Inject constructor(
         } else {
             dao.getById(draft.id)?.createdAt ?: clock.instant()
         }
-        val id = dao.upsert(draft.toEntity(createdAt))
+        val rowId = dao.upsert(draft.toEntity(createdAt))
+        // @Upsert returns the *inserted* rowId. An update performs no insert, so it returns -1
+        // and the draft's existing id is the only usable one. Trusting rowId here silently
+        // skipped rescheduling on every edit, leaving reminders on the old date.
+        val id = if (draft.isNew) rowId else draft.id
         // Rescheduling here rather than at the call sites is what stops an edit from leaving
         // reminders pointing at the old date.
         getItem(id)?.let { reminders.schedule(it) }

@@ -123,6 +123,18 @@ class ItemDaoTest {
     }
 
     @Test
+    fun upsertReturnValueForAnUpdateIsNotTheRowId() = runTest {
+        // Documents real Room behaviour: @Upsert returns the inserted rowId, and for an UPDATE
+        // there is no insert, so the value is not usable as an id. Anything that needs the id
+        // after saving an existing item must use the id it already had.
+        val id = dao.upsert(item("Car insurance", LocalDate.of(2027, 2, 1)))
+        val stored = dao.getById(id)!!
+
+        val returnedOnUpdate = dao.upsert(stored.copy(name = "Renamed"))
+        assertEquals("update should not report a fresh rowId", -1L, returnedOnUpdate)
+    }
+
+    @Test
     fun observeByIdEmitsNullOnceDeleted() = runTest {
         val id = dao.upsert(item("Inspection", LocalDate.of(2027, 8, 8)))
         assertEquals("Inspection", dao.observeById(id).first()!!.name)
