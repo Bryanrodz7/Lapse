@@ -60,8 +60,9 @@ android {
             if (keystoreProperties != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
+            // R8: shrink, optimise and obfuscate. Keep rules live in src/main/keepRules.
             optimization {
-                enable = false
+                enable = true
             }
         }
     }

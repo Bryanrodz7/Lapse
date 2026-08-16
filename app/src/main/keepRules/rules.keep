@@ -1,12 +1,43 @@
-# Add project specific R8 rules here.
-# AGP will combine all keep rule files in src/main/keepRules to pass to R8
+# R8 keep rules. AGP combines every file in src/main/keepRules.
 #
-# For more details, see
-#   https://d.android.com/r/tools/r8/keep-rules
+# Most of what this app uses ships its own consumer rules — Room, Hilt/Dagger, WorkManager,
+# Compose, Glance, Play Services Ads and UMP all bundle keeps in their AARs, so none of them
+# need rules here. What follows is only the things R8 cannot see, because they are resolved by
+# *name* at runtime rather than by reference.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# --- Enum constant names that are persisted ---
+#
+# Category.name is written to the `category` column and ThemeMode.name into DataStore; both are
+# read back by string-matching against `entries`. If those names were ever obfuscated, every
+# stored category would silently decode to OTHER on upgrade and the saved theme would reset.
+#
+# In practice AGP's default proguard-android-optimize.txt already prevents that: it keeps
+# values() and valueOf() on every enum, and keeping valueOf forces R8 to retain the constant
+# names. Verified by removing the rules below and rebuilding — the names survived regardless.
+#
+# They are kept anyway, deliberately. They cost nothing, they stop this from resting on a default
+# config that is outside our control, and they document that these particular names are stored
+# data rather than implementation detail — which is the part a future reader would not guess.
+-keepclassmembers enum dev.randyapps.lapse.data.model.Category { <fields>; }
+-keepclassmembers enum dev.randyapps.lapse.data.model.QuickPick { <fields>; }
+-keepclassmembers enum dev.randyapps.lapse.data.settings.ThemeMode { <fields>; }
+
+# ItemStatus and ExpirySection are derived at read time and never stored, so they are safe to
+# obfuscate. Listed here only so the next reader knows the omission is deliberate.
+
+# --- Worker class names ---
+#
+# WorkManager persists the worker's fully-qualified class name in its own database and
+# instantiates it by that name later. A reminder enqueued by one build is run by the next, so a
+# name that changed between releases would leave scheduled reminders unable to start — silently,
+# and only for users who upgrade. androidx.work ships a consumer rule covering ListenableWorker
+# subclasses; as with the enums, these are explicit so the guarantee is ours and not inherited.
+-keep class dev.randyapps.lapse.notifications.ReminderWorker { *; }
+-keep class dev.randyapps.lapse.widget.DailyWidgetRefreshWorker { *; }
+
+# --- Glance widget ---
+#
+# The receiver is named in the manifest and so is kept automatically, but the GlanceAppWidget it
+# returns is also reconstructed when the system restores widget state.
+-keep class dev.randyapps.lapse.widget.NextExpiryWidget { *; }
+-keep class dev.randyapps.lapse.widget.NextExpiryWidgetReceiver { *; }
