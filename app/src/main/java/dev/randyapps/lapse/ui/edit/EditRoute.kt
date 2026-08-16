@@ -3,6 +3,7 @@ package dev.randyapps.lapse.ui.edit
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +24,12 @@ fun EditRoute(
     viewModel: EditViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // The system Photo Picker: no media permission required, and the user grants access to
+    // exactly the one image they pick.
+    val photoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let(viewModel::onPhotoPicked) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -50,6 +57,12 @@ fun EditRoute(
         onExpiryDateChange = viewModel::onExpiryDateChange,
         onToggleReminder = viewModel::onToggleReminder,
         onNoteChange = viewModel::onNoteChange,
+        onPickPhoto = {
+            photoLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+            )
+        },
+        onRemovePhoto = viewModel::onPhotoRemoved,
         onQuickPick = viewModel::onQuickPick,
         onRenew = viewModel::onRenew,
         onSave = viewModel::onSave,

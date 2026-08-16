@@ -18,6 +18,9 @@ data class EditUiState(
     val expiryDate: LocalDate = LocalDate.EPOCH,
     val reminderDaysBefore: List<Int> = DEFAULT_REMINDER_DAYS,
     val note: String = "",
+    val photoPath: String? = null,
+    /** True while a picked image is being copied and downscaled. */
+    val savingPhoto: Boolean = false,
     /** Set once the item is loaded (edit) or immediately (new), so the form never flashes blanks. */
     val ready: Boolean = false,
     /** The creation date of an existing item, needed to infer its renewal term. */
@@ -53,5 +56,6 @@ data class EditUiState(
         expiryDate = expiryDate,
         reminderDaysBefore = reminderDaysBefore.sortedDescending(),
         note = note.trim().takeIf { it.isNotBlank() },
+        photoPath = photoPath,
     )
 }

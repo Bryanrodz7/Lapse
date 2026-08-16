@@ -7,6 +7,8 @@ import dev.randyapps.lapse.data.db.ItemEntity
 import dev.randyapps.lapse.data.model.Category
 import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.QuickPick
+import android.net.Uri
+import dev.randyapps.lapse.data.photo.PhotoStore
 import dev.randyapps.lapse.data.settings.LapseSettings
 import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.data.settings.ThemeMode
@@ -60,6 +62,15 @@ class EditViewModelTest {
 
     private var settingsStore = FakeSettingsStore()
 
+    /** Pretends a pick always yields this stored path. */
+    private class FakePhotoStore(private val stored: String? = "/photos/new.jpg") : PhotoStore {
+        val deleted = mutableListOf<String?>()
+        override suspend fun save(source: Uri): String? = stored
+        override suspend fun delete(path: String?) { deleted += path }
+    }
+
+    private var photoStore = FakePhotoStore()
+
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)
 
@@ -77,6 +88,7 @@ class EditViewModelTest {
             clock = clock,
             permissionStore = permissionStore,
             settingsStore = settingsStore,
+            photoStore = photoStore,
             savedStateHandle = SavedStateHandle(
                 mapOf(
                     EditDestination.ARG_ITEM_ID to itemId,
@@ -328,6 +340,22 @@ class EditViewModelTest {
         assertTrue("asked once, never again", permissionStore.hasAsked)
         assertTrue(vm.state.value.finished)
         assertEquals(1, repository.getAllItems().size)
+    }
+
+    // --- photo ---
+    // Picking needs a real android.net.Uri, which JVM tests cannot construct, so those cases
+    // live in EditViewModelPhotoTest under androidTest.
+
+    @Test
+    fun `removing a photo clears it from the form only`() = runTest {
+        val vm = viewModel(4, listOf(entity(4, "Passport", today.plusDays(30)).copy(photoPath = "/photos/old.jpg")))
+        advanceUntilIdle()
+
+        vm.onPhotoRemoved()
+
+        assertNull(vm.state.value.photoPath)
+        // Backing out without saving must not have destroyed the file.
+        assertEquals(emptyList<String?>(), photoStore.deleted)
     }
 
     // --- renew ---

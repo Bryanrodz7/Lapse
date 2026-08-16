@@ -71,6 +71,8 @@ fun EditScreen(
     onExpiryDateChange: (LocalDate) -> Unit,
     onToggleReminder: (Int) -> Unit,
     onNoteChange: (String) -> Unit,
+    onPickPhoto: () -> Unit,
+    onRemovePhoto: () -> Unit,
     onQuickPick: (QuickPick) -> Unit,
     onRenew: () -> Unit,
     onSave: () -> Unit,
@@ -180,6 +182,14 @@ fun EditScreen(
             Spacer(Modifier.height(28.dp))
             FieldLabel(stringResource(R.string.label_remind_me))
             ReminderChips(selected = state.reminderDaysBefore, onToggle = onToggleReminder)
+
+            Spacer(Modifier.height(28.dp))
+            PhotoField(
+                photoPath = state.photoPath,
+                saving = state.savingPhoto,
+                onPick = onPickPhoto,
+                onRemove = onRemovePhoto,
+            )
 
             Spacer(Modifier.height(28.dp))
             OutlinedTextField(

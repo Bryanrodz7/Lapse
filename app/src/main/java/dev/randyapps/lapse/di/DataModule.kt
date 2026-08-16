@@ -14,6 +14,8 @@ import dagger.hilt.components.SingletonComponent
 import dev.randyapps.lapse.data.ReminderScheduler
 import dev.randyapps.lapse.data.db.ItemDao
 import dev.randyapps.lapse.data.db.LapseDatabase
+import dev.randyapps.lapse.data.photo.InternalPhotoStore
+import dev.randyapps.lapse.data.photo.PhotoStore
 import dev.randyapps.lapse.data.settings.DataStoreSettingsStore
 import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.notifications.NotificationPermissionStore
@@ -61,6 +63,10 @@ object DataModule {
     @Singleton
     fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         context.settingsDataStore
+
+    @Provides
+    @Singleton
+    fun providePhotoStore(store: InternalPhotoStore): PhotoStore = store
 
     @Provides
     @Singleton

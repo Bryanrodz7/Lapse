@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  API 30 and below, where cloud backup and device transfer cannot be configured separately.
+
+  Photos are excluded outright, because "never uploaded" is a stated guarantee. The database and
+  preferences are left backed up here: on these versions the alternative is allowBackup="false",
+  which would also kill device transfer, and tracked dates surviving a lost phone is worth more
+  than absolute locality for a shrinking set of devices. On API 31+ nothing is uploaded at all —
+  see data_extraction_rules.xml.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="file" path="photos" />
 </full-backup-content>

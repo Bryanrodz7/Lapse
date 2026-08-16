@@ -94,6 +94,14 @@
     <string name="permission_allow">Continue</string>
     <string name="permission_not_now">Not now</string>
 
+    <!-- Photo -->
+    <string name="label_photo">Photo</string>
+    <string name="photo_add">Add a photo</string>
+    <string name="photo_replace">Replace</string>
+    <string name="photo_remove">Remove</string>
+    <string name="cd_item_photo">Photo of this item</string>
+    <string name="photo_hint">Kept on this device only.</string>
+
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_default_reminders">Default reminders</string>

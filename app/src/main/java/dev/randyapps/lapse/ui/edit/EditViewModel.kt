@@ -1,5 +1,6 @@
 package dev.randyapps.lapse.ui.edit
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +9,7 @@ import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.data.model.Category
 import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.QuickPick
+import dev.randyapps.lapse.data.photo.PhotoStore
 import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.notifications.NotificationPermissionStore
 import dev.randyapps.lapse.ui.nav.EditDestination
@@ -28,6 +30,7 @@ class EditViewModel @Inject constructor(
     private val clock: Clock,
     private val permissionStore: NotificationPermissionStore,
     private val settingsStore: SettingsStore,
+    private val photoStore: PhotoStore,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -94,6 +97,7 @@ class EditViewModel @Inject constructor(
                 expiryDate = item.expiryDate,
                 reminderDaysBefore = item.reminderDaysBefore,
                 note = item.note.orEmpty(),
+                photoPath = item.photoPath,
                 createdOn = item.createdAt.atZone(clock.zone ?: ZoneId.systemDefault()).toLocalDate(),
                 ready = true,
             )
@@ -107,6 +111,28 @@ class EditViewModel @Inject constructor(
     fun onExpiryDateChange(value: LocalDate) = _state.update { it.copy(expiryDate = value) }
 
     fun onNoteChange(value: String) = _state.update { it.copy(note = value) }
+
+    /**
+     * Copies the picked image into internal storage straight away rather than holding the
+     * content Uri: the Photo Picker grant is temporary and would stop resolving later.
+     */
+    fun onPhotoPicked(uri: Uri) {
+        _state.update { it.copy(savingPhoto = true) }
+        viewModelScope.launch {
+            val stored = photoStore.save(uri)
+            _state.update {
+                // A failed decode leaves the previous photo alone rather than clearing it.
+                if (stored == null) it.copy(savingPhoto = false)
+                else it.copy(photoPath = stored, savingPhoto = false)
+            }
+        }
+    }
+
+    /**
+     * Clears the reference now; the file itself is deleted by the repository on save, so
+     * backing out of the form without saving leaves the original photo intact.
+     */
+    fun onPhotoRemoved() = _state.update { it.copy(photoPath = null) }
 
     /** Reminder offsets are toggles rather than a picker: one tap on, one tap off. */
     fun onToggleReminder(days: Int) = _state.update { current ->

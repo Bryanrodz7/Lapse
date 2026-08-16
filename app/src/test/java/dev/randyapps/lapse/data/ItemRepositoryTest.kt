@@ -7,6 +7,8 @@ import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.ItemStatus
 import dev.randyapps.lapse.data.model.Item
 import dev.randyapps.lapse.data.model.toDraft
+import dev.randyapps.lapse.data.photo.PhotoStore
+import android.net.Uri
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -54,11 +56,20 @@ class ItemRepositoryTest {
         override suspend fun rescheduleAll(items: List<Item>) { rescheduledAll++ }
     }
 
+    /** Records photo deletions so the lifecycle can be asserted without touching a filesystem. */
+    private class RecordingPhotoStore : PhotoStore {
+        val deleted = mutableListOf<String?>()
+        override suspend fun save(source: Uri): String? = null
+        override suspend fun delete(path: String?) { deleted += path }
+    }
+
     private lateinit var scheduler: RecordingScheduler
+    private lateinit var photos: RecordingPhotoStore
 
     private fun repository(vararg entities: ItemEntity): ItemRepository {
         scheduler = RecordingScheduler()
-        return ItemRepository(FakeItemDao(entities.toList()), clock, scheduler)
+        photos = RecordingPhotoStore()
+        return ItemRepository(FakeItemDao(entities.toList()), clock, scheduler, photos)
     }
 
     @Test
@@ -274,5 +285,50 @@ class ItemRepositoryTest {
         )
         repo.rescheduleAllReminders()
         assertEquals(1, scheduler.rescheduledAll)
+    }
+
+    // --- photo lifecycle ---
+
+    @Test
+    fun `replacing a photo deletes the file it replaced`() = runTest {
+        val repo = repository(entity(4, "Passport", today.plusDays(200)).copy(photoPath = "/p/old.jpg"))
+        repo.save(repo.getItem(4)!!.toDraft().copy(photoPath = "/p/new.jpg"))
+
+        assertEquals(listOf("/p/old.jpg"), photos.deleted)
+    }
+
+    @Test
+    fun `removing a photo deletes the file`() = runTest {
+        val repo = repository(entity(4, "Passport", today.plusDays(200)).copy(photoPath = "/p/old.jpg"))
+        repo.save(repo.getItem(4)!!.toDraft().copy(photoPath = null))
+
+        assertEquals(listOf("/p/old.jpg"), photos.deleted)
+    }
+
+    @Test
+    fun `saving with the photo unchanged deletes nothing`() = runTest {
+        val repo = repository(entity(4, "Passport", today.plusDays(200)).copy(photoPath = "/p/keep.jpg"))
+        repo.save(repo.getItem(4)!!.toDraft().copy(name = "Renamed"))
+
+        assertEquals(emptyList<String?>(), photos.deleted)
+    }
+
+    @Test
+    fun `deleting an item keeps its photo so undo can restore it`() = runTest {
+        val repo = repository(entity(4, "Passport", today.plusDays(200)).copy(photoPath = "/p/keep.jpg"))
+        repo.delete(4)
+
+        // Deleting the file at swipe time would leave undo restoring an item with no photo.
+        assertEquals(emptyList<String?>(), photos.deleted)
+    }
+
+    @Test
+    fun `the photo is discarded only once the undo window closes`() = runTest {
+        val repo = repository(entity(4, "Passport", today.plusDays(200)).copy(photoPath = "/p/gone.jpg"))
+        val item = repo.getItem(4)!!
+        repo.delete(4)
+        repo.purgePhotoFor(item)
+
+        assertEquals(listOf("/p/gone.jpg"), photos.deleted)
     }
 }

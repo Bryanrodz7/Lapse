@@ -47,6 +47,8 @@ private fun PreviewEdit(state: EditUiState, dark: Boolean) {
             onExpiryDateChange = {},
             onToggleReminder = {},
             onNoteChange = {},
+            onPickPhoto = {},
+            onRemovePhoto = {},
             onQuickPick = {},
             onRenew = {},
             onSave = {},

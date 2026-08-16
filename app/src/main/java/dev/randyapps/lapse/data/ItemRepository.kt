@@ -3,6 +3,8 @@ package dev.randyapps.lapse.data
 import dev.randyapps.lapse.data.db.ItemDao
 import dev.randyapps.lapse.data.db.ItemEntity
 import dev.randyapps.lapse.data.model.Item
+import dev.randyapps.lapse.data.photo.NoOpPhotoStore
+import dev.randyapps.lapse.data.photo.PhotoStore
 import dev.randyapps.lapse.data.model.ItemDraft
 import dev.randyapps.lapse.data.model.daysRemaining
 import dev.randyapps.lapse.data.model.statusFor
@@ -24,6 +26,7 @@ class ItemRepository @Inject constructor(
     private val dao: ItemDao,
     private val clock: Clock,
     private val reminders: ReminderScheduler = NoOpReminderScheduler,
+    private val photos: PhotoStore = NoOpPhotoStore,
 ) {
 
     fun observeItems(): Flow<List<Item>> =
@@ -47,6 +50,7 @@ class ItemRepository @Inject constructor(
         } else {
             dao.getById(draft.id)?.createdAt ?: clock.instant()
         }
+        val previousPhoto = if (draft.isNew) null else dao.getById(draft.id)?.photoPath
         val rowId = dao.upsert(draft.toEntity(createdAt))
         // @Upsert returns the *inserted* rowId. An update performs no insert, so it returns -1
         // and the draft's existing id is the only usable one. Trusting rowId here silently
@@ -55,13 +59,24 @@ class ItemRepository @Inject constructor(
         // Rescheduling here rather than at the call sites is what stops an edit from leaving
         // reminders pointing at the old date.
         getItem(id)?.let { reminders.schedule(it) }
+        // A replaced or removed photo leaves its file behind otherwise.
+        if (previousPhoto != null && previousPhoto != draft.photoPath) {
+            photos.delete(previousPhoto)
+        }
         return id
     }
 
+    /**
+     * Removes the row and its reminders but deliberately keeps the photo file, because the
+     * delete is undoable. [purgePhotoFor] discards it once the undo window has closed.
+     */
     suspend fun delete(id: Long) {
         dao.deleteById(id)
         reminders.cancel(id)
     }
+
+    /** Called when an undoable delete finally expires. */
+    suspend fun purgePhotoFor(item: Item) = photos.delete(item.photoPath)
 
     /**
      * Puts a deleted item back with its original id and creation time, so undo restores the

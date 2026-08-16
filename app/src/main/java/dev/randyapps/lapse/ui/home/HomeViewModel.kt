@@ -54,8 +54,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Called once the undo window closes, so a stale item can't be restored later. */
+    /**
+     * Called once the undo window closes, so a stale item can't be restored later. This is also
+     * where a deleted item's photo is finally discarded — deleting it at swipe time would make
+     * undo restore an item whose photo had already gone.
+     */
     fun clearRecentlyDeleted() {
+        val item = _recentlyDeleted.value ?: return
         _recentlyDeleted.value = null
+        viewModelScope.launch { repository.purgePhotoFor(item) }
     }
 }
