@@ -1,0 +1,13 @@
+# GitHub Pages configuration for the Lapse privacy policy site.
+#
+# Without a theme, Pages still converts markdown to HTML but applies no layout or stylesheet —
+# the page loads as unstyled black-on-white text. primer is a built-in supported theme, so it
+# needs no Gemfile and no build step.
+title: Lapse
+description: Expiry reminders that stay on your phone.
+theme: jekyll-theme-primer
+
+# Keep the build to the pages that exist; nothing else in this repo should be published.
+include:
+  - privacy-policy.md
+  - index.md
