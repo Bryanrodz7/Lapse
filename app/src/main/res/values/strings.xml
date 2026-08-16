@@ -117,8 +117,10 @@
     <string name="theme_dark">Dark</string>
     <string name="settings_about">About</string>
     <string name="settings_version">Lapse %1$s</string>
-    <string name="settings_privacy">Your items, dates and photos never leave this device. No account, no sync, no analytics.</string>
-    <string name="settings_ads">Ads are served by Google and are not personalised — Lapse shares nothing about you with them.</string>
+    <string name="settings_privacy">Your items, dates, notes and photos never leave this device. No account, no sync, no analytics.</string>
+    <string name="settings_ads">Ads are personalised. Google receives your device’s advertising ID and ad interaction data to select them. Lapse never sends Google anything you have tracked.</string>
+    <string name="settings_privacy_options">Ad privacy choices</string>
+    <string name="settings_privacy_options_hint">Change or withdraw your consent for personalised ads.</string>
     <string name="settings_font_credit">Set in Instrument Serif, used under the SIL Open Font License.</string>
 
     <!-- Categories -->

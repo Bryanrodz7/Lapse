@@ -1,5 +1,6 @@
 package dev.randyapps.lapse.ui.home
 
+import dev.randyapps.lapse.ads.AdsReadiness
 import dev.randyapps.lapse.ads.AdsState
 import dev.randyapps.lapse.data.FakeItemDao
 import dev.randyapps.lapse.data.ItemRepository
@@ -63,9 +64,15 @@ class HomeViewModelTest {
 
     private var adsState: AdsState = FakeAdsState(false)
 
+    private class FakeAdsReadiness(ready: Boolean) : AdsReadiness {
+        override val adsReady = flowOf(ready)
+    }
+
+    private var adsReadiness: AdsReadiness = FakeAdsReadiness(true)
+
     private fun viewModel(vararg entities: ItemEntity): HomeViewModel {
         repository = ItemRepository(FakeItemDao(entities.toList()), clock)
-        return HomeViewModel(repository, adsState)
+        return HomeViewModel(repository, adsState, adsReadiness)
     }
 
     /**
@@ -209,6 +216,29 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertFalse(vm.adsEnabled.value)
+    }
+
+    @Test
+    fun `no ad is requested until consent has resolved`() = runTest {
+        // adsReady gates AdView creation; the space is still reserved, so nothing shifts.
+        adsState = FakeAdsState(true)
+        adsReadiness = FakeAdsReadiness(false)
+        val vm = viewModel(entity(1, "Passport", 5))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.adsReady.collect {} }
+        advanceUntilIdle()
+
+        assertFalse(vm.adsReady.value)
+        assertTrue("space is still reserved while consent resolves", vm.adsEnabled.value)
+    }
+
+    @Test
+    fun `the banner becomes requestable once consent resolves`() = runTest {
+        adsReadiness = FakeAdsReadiness(true)
+        val vm = viewModel(entity(1, "Passport", 5))
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.adsReady.collect {} }
+        advanceUntilIdle()
+
+        assertTrue(vm.adsReady.value)
     }
 
     @Test

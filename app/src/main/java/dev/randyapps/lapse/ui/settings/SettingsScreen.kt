@@ -19,6 +19,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,6 +43,8 @@ fun SettingsScreen(
     settings: LapseSettings,
     onToggleReminderDay: (Int) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit,
+    /** Null when the consent framework does not require a way back into the form. */
+    onPrivacyOptions: (() -> Unit)?,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -111,6 +114,23 @@ fun SettingsScreen(
                         selected = mode == settings.themeMode,
                         label = stringResource(mode.labelRes),
                         onClick = { onThemeModeChange(mode) },
+                    )
+                }
+            }
+
+            if (onPrivacyOptions != null) {
+                Spacer(Modifier.height(36.dp))
+                FieldLabel(stringResource(R.string.settings_privacy_options))
+                Text(
+                    text = stringResource(R.string.settings_privacy_options_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+                OutlinedButton(onClick = onPrivacyOptions) {
+                    Text(
+                        text = stringResource(R.string.settings_privacy_options),
+                        style = MaterialTheme.typography.labelMedium,
                     )
                 }
             }

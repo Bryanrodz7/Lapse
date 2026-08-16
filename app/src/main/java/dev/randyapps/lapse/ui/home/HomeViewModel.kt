@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.randyapps.lapse.ads.AdsState
+import dev.randyapps.lapse.ads.AdsReadiness
 import dev.randyapps.lapse.data.ItemRepository
 import dev.randyapps.lapse.data.model.Item
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,15 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val repository: ItemRepository,
     adsState: AdsState,
+    adsReadiness: AdsReadiness,
 ) : ViewModel() {
+
+    /** True once consent is resolved and the Ads SDK is initialised. */
+    val adsReady: StateFlow<Boolean> = adsReadiness.adsReady.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false,
+    )
 
     /**
      * Drives whether Home reserves space for a banner at all.

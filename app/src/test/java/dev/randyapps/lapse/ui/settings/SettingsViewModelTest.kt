@@ -1,5 +1,6 @@
 package dev.randyapps.lapse.ui.settings
 
+import dev.randyapps.lapse.ads.ConsentOptions
 import dev.randyapps.lapse.data.settings.LapseSettings
 import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.data.settings.ThemeMode
@@ -35,6 +36,14 @@ class SettingsViewModelTest {
         }
     }
 
+    private class FakeConsentOptions(required: Boolean = false) : ConsentOptions {
+        override val privacyOptionsRequired = MutableStateFlow(required)
+        var formShown = false
+        override fun showPrivacyOptionsForm(activity: android.app.Activity) { formShown = true }
+    }
+
+    private var consentOptions = FakeConsentOptions()
+
     private lateinit var store: FakeSettingsStore
 
     @Before
@@ -45,7 +54,7 @@ class SettingsViewModelTest {
 
     private fun viewModel(initial: LapseSettings = LapseSettings()): SettingsViewModel {
         store = FakeSettingsStore(initial)
-        return SettingsViewModel(store)
+        return SettingsViewModel(store, consentOptions)
     }
 
     /** Keeps a live collector, since settings is shared with WhileSubscribed. */
@@ -102,6 +111,31 @@ class SettingsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(emptyList<Int>(), state().defaultReminderDays)
+    }
+
+    @Test
+    fun `the privacy options entry is hidden unless the consent framework requires it`() = runTest {
+        consentOptions = FakeConsentOptions(required = false)
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.privacyOptionsRequired.collect {}
+        }
+        advanceUntilIdle()
+
+        assertEquals(false, vm.privacyOptionsRequired.value)
+    }
+
+    @Test
+    fun `the privacy options entry appears when consent was collected`() = runTest {
+        // The consent form tells users to look for this in the app, so it must be there.
+        consentOptions = FakeConsentOptions(required = true)
+        val vm = viewModel()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            vm.privacyOptionsRequired.collect {}
+        }
+        advanceUntilIdle()
+
+        assertEquals(true, vm.privacyOptionsRequired.value)
     }
 
     @Test

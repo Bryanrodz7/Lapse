@@ -28,6 +28,11 @@ import com.google.android.gms.ads.AdView
  */
 @Composable
 fun AnchoredAdBanner(
+    /**
+     * False until the UMP consent flow has resolved and the Ads SDK is initialised. The space is
+     * reserved either way, so resolving consent never shifts the layout.
+     */
+    ready: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -44,6 +49,9 @@ fun AnchoredAdBanner(
     ) {
         // Previews and screenshot tests have no Play Services; reserve the space and stop.
         if (LocalInspectionMode.current) return@Box
+
+        // No ad request may go out before consent is resolved.
+        if (!ready) return@Box
 
         AndroidView(
             modifier = Modifier.fillMaxWidth(),

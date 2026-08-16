@@ -67,6 +67,7 @@ fun HomeScreen(
      * the single switch a future "remove ads" purchase flips.
      */
     adsEnabled: Boolean = false,
+    adsReady: Boolean = false,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val message = recentlyDeleted?.let { stringResource(R.string.snackbar_deleted, it.name) }
@@ -135,7 +136,7 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         // As the bottomBar, the banner's reserved height flows into the content padding below,
         // so the list scrolls clear of it rather than under it.
-        bottomBar = { if (adsEnabled) AnchoredAdBanner() },
+        bottomBar = { if (adsEnabled) AnchoredAdBanner(ready = adsReady) },
     ) { padding ->
         when {
             // Blank rather than a spinner: the first read is fast enough that a spinner would

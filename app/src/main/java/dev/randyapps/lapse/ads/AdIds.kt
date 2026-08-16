@@ -22,6 +22,15 @@ object AdIds {
      */
     const val PRODUCTION_BANNER_UNIT_ID = TEST_BANNER_UNIT_ID
 
+    /**
+     * Hashed device ids that UMP treats as test devices, so the debug EEA geography applies.
+     * The value is printed by the Ads SDK on first run: look for "Use ... setTestDeviceIds".
+     * Debug builds only — it has no effect in release.
+     */
+    val TEST_DEVICE_HASHED_IDS: List<String> = listOf(
+        // TODO: replaced at runtime during development; see CLAUDE.md for how to read it.
+    )
+
     /** Google's public test application id, mirrored in the manifest meta-data. */
     const val TEST_APPLICATION_ID = "ca-app-pub-3940256099942544~3347511713"
 

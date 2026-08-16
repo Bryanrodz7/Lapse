@@ -16,6 +16,23 @@ interface AdsState {
     val adsEnabled: Flow<Boolean>
 }
 
+/**
+ * Whether the Ads SDK has been initialised, which only happens once UMP consent is resolved.
+ * An interface so ViewModels stay JVM-testable; ConsentManager needs a Context.
+ */
+interface AdsReadiness {
+    val adsReady: Flow<Boolean>
+}
+
+/**
+ * The consent surface Settings needs. An interface for the same reason as the others: the real
+ * implementation needs a Context and an Activity.
+ */
+interface ConsentOptions {
+    val privacyOptionsRequired: Flow<Boolean>
+    fun showPrivacyOptionsForm(activity: android.app.Activity)
+}
+
 @Singleton
 class DefaultAdsState @Inject constructor() : AdsState {
     // TODO: read the "remove ads" purchase here once billing exists.

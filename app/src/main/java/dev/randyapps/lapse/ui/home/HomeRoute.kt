@@ -22,6 +22,7 @@ fun HomeRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val recentlyDeleted by viewModel.recentlyDeleted.collectAsStateWithLifecycle()
     val adsEnabled by viewModel.adsEnabled.collectAsStateWithLifecycle()
+    val adsReady by viewModel.adsReady.collectAsStateWithLifecycle()
 
     HomeScreen(
         state = state,
@@ -34,5 +35,6 @@ fun HomeRoute(
         onUndoDelete = viewModel::undoDelete,
         onUndoWindowClosed = viewModel::clearRecentlyDeleted,
         adsEnabled = adsEnabled,
+        adsReady = adsReady,
     )
 }

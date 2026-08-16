@@ -11,8 +11,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import javax.inject.Inject
 import dagger.hilt.android.AndroidEntryPoint
 import dev.randyapps.lapse.data.settings.ThemeMode
+import dev.randyapps.lapse.ads.ConsentManager
 import dev.randyapps.lapse.notifications.Notifications
 import dev.randyapps.lapse.ui.AppViewModel
 import dev.randyapps.lapse.ui.nav.LapseNavHost
@@ -22,6 +24,9 @@ import dev.randyapps.lapse.ui.theme.LapseTheme
 class MainActivity : ComponentActivity() {
 
     private val appViewModel: AppViewModel by viewModels()
+
+    // UMP needs an Activity to present the consent form.
+    @Inject lateinit var consentManager: ConsentManager
 
     /**
      * Item id carried by a tapped notification. Held as state rather than read once, so a tap
@@ -33,6 +38,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         pendingItemId = intent.itemIdExtra()
+        // Resolve consent before any ad request; the Ads SDK is initialised inside.
+        consentManager.gatherConsent(this)
         setContent {
             val themeMode by appViewModel.themeMode.collectAsStateWithLifecycle()
             // The explicit choices win over the system; SYSTEM defers to it.

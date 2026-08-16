@@ -11,7 +11,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.randyapps.lapse.ads.AdsReadiness
 import dev.randyapps.lapse.ads.AdsState
+import dev.randyapps.lapse.ads.ConsentManager
+import dev.randyapps.lapse.ads.ConsentOptions
 import dev.randyapps.lapse.ads.DefaultAdsState
 import dev.randyapps.lapse.data.ReminderScheduler
 import dev.randyapps.lapse.data.db.ItemDao
@@ -65,6 +68,14 @@ object DataModule {
     @Singleton
     fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         context.settingsDataStore
+
+    @Provides
+    @Singleton
+    fun provideAdsReadiness(consentManager: ConsentManager): AdsReadiness = consentManager
+
+    @Provides
+    @Singleton
+    fun provideConsentOptions(consentManager: ConsentManager): ConsentOptions = consentManager
 
     @Provides
     @Singleton

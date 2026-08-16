@@ -3,6 +3,7 @@ package dev.randyapps.lapse.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.randyapps.lapse.ads.ConsentOptions
 import dev.randyapps.lapse.data.settings.LapseSettings
 import dev.randyapps.lapse.data.settings.SettingsStore
 import dev.randyapps.lapse.data.settings.ThemeMode
@@ -15,7 +16,18 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val store: SettingsStore,
+    private val consentOptions: ConsentOptions,
 ) : ViewModel() {
+
+    val privacyOptionsRequired: StateFlow<Boolean> = consentOptions.privacyOptionsRequired.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = false,
+    )
+
+    fun onShowPrivacyOptions(activity: android.app.Activity) {
+        consentOptions.showPrivacyOptionsForm(activity)
+    }
 
     val settings: StateFlow<LapseSettings> = store.settings.stateIn(
         scope = viewModelScope,
