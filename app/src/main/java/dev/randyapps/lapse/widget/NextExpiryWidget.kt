@@ -71,9 +71,7 @@ class NextExpiryWidget : GlanceAppWidget() {
             .fromApplication(context, WidgetEntryPoint::class.java)
             .itemRepository()
 
-        // Soonest first, so an already-expired item is shown as expired rather than skipped in
-        // favour of the next active one.
-        val next = repository.getAllItems().minByOrNull { it.expiryDate }
+        val next = selectWidgetItem(repository.getAllItems())
 
         val content = next?.let { contentFor(context, it) } ?: emptyContent(context)
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -83,6 +81,24 @@ class NextExpiryWidget : GlanceAppWidget() {
         }
 
         provideContent { WidgetBody(content, intent) }
+    }
+}
+
+/**
+ * Picks the one item the widget shows.
+ *
+ * Anything already expired wins, because a missed renewal is more urgent than an upcoming one —
+ * an expired item is shown as expired rather than skipped in favour of the next active one. Among
+ * several expired items it is the *most recently* expired that is shown: the gym membership that
+ * lapsed three months ago is not what you need reminding about, and leaving it pinned there
+ * forever would make the widget useless. With nothing expired, it is simply the soonest upcoming.
+ */
+internal fun selectWidgetItem(items: List<Item>): Item? {
+    val expired = items.filter { it.daysRemaining < 0 }
+    return if (expired.isNotEmpty()) {
+        expired.maxByOrNull { it.expiryDate }
+    } else {
+        items.minByOrNull { it.expiryDate }
     }
 }
 

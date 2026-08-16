@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Themed-icon variant (Android 13+). The system tints this, so it has to read as a silhouette:
+  the dial with its final quarter missing rather than a solid blob.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54 L84,54 A30,30 0 1 1 54,24 Z" />
+</vector>

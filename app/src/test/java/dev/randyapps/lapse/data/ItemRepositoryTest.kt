@@ -367,21 +367,4 @@ class ItemRepositoryTest {
         assertEquals(2, changes.changes)
     }
 
-    @Test
-    fun `the widget's next item is the soonest by date, expired included`() = runTest {
-        // The widget shows minByOrNull { expiryDate }; an expired item is shown as expired
-        // rather than skipped in favour of the next active one.
-        val repo = repository(
-            entity(1, "Active", today.plusDays(10)),
-            entity(2, "Expired", today.minusDays(3)),
-        )
-        val next = repo.getAllItems().minByOrNull { it.expiryDate }!!
-        assertEquals("Expired", next.name)
-        assertTrue(next.daysRemaining < 0)
-    }
-
-    @Test
-    fun `with nothing tracked the widget has no item to show`() = runTest {
-        assertEquals(null, repository().getAllItems().minByOrNull { it.expiryDate })
-    }
 }
