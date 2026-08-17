@@ -186,8 +186,14 @@ and the FAB correctly hides.
 
 ## Still outstanding for the listing
 
-- ~~Feature graphic 1024 × 500~~ — done: `store/feature-graphic.png`, regenerate with
-  `python store/generate_feature_graphic.py`
+- ~~Feature graphic 1024 × 500~~ — done, **two versions, pick one**. Regenerate both with
+  `python store/generate_feature_graphic.py both`.
+  - `feature-graphic.png` — wordmark 216px wide. Nothing in the bottom third. If a promo video
+    is ever attached, a centred play button lands on the tagline's tail, not the app name.
+  - `feature-graphic-poster.png` — wordmark 400px wide, close to the reference. Costs: 28% of the
+    ink sits below the bottom-third line (the whole tagline plus the "p" descender), and a centred
+    play button falls across the final **e of "Lapse"**.
+  - Both hold 80px margins on every edge and survive a centre-crop down to 72% of height.
 - **Real AdMob app ID + unit ID** — still the test IDs (`AdIds.kt` and the manifest `meta-data`)
 - ~~Privacy policy URL~~ — done: <https://bryanrodz7.github.io/Lapse/privacy-policy/>
 - **Upload keystore** — you create it; command is in `store/play-listing.md`
