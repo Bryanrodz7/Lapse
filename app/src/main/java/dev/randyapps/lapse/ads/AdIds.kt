@@ -6,21 +6,12 @@ package dev.randyapps.lapse.ads
  * One banner unit, and deliberately nothing else. This app has no interstitial, rewarded, or
  * app-open units and must not gain any: a reminder app that interrupts you is worse than no
  * reminder app.
+ *
+ * The unit id itself is not declared here. It comes from [AdUnits], which exists twice — once in
+ * `src/debug` holding Google's test unit, once in `src/release` holding the real one — so the
+ * production id is never compiled into a debug build. See either file for why.
  */
 object AdIds {
-
-    /**
-     * Google's public test banner unit. Safe to ship in debug; serving real ads against a real
-     * unit from a development build risks the AdMob account being flagged for invalid traffic.
-     */
-    const val TEST_BANNER_UNIT_ID = "ca-app-pub-3940256099942544/9214589741"
-
-    /**
-     * TODO: replace with the real AdMob banner unit id before the first Play release.
-     * Until then this intentionally holds the test id, so a forgotten swap serves test ads
-     * rather than silently failing or violating AdMob policy.
-     */
-    const val PRODUCTION_BANNER_UNIT_ID = TEST_BANNER_UNIT_ID
 
     /**
      * Hashed device ids that UMP treats as test devices, so the debug EEA geography applies.
@@ -28,28 +19,12 @@ object AdIds {
      * Debug builds only — it has no effect in release.
      */
     val TEST_DEVICE_HASHED_IDS: List<String> = listOf(
-        // TODO: replaced at runtime during development; see CLAUDE.md for how to read it.
+        // Populated at runtime during development; see CLAUDE.md for how to read it.
     )
 
-    /** Google's public test application id, mirrored in the manifest meta-data. */
-    const val TEST_APPLICATION_ID = "ca-app-pub-3940256099942544~3347511713"
-
     /**
-     * TODO: replace with the real AdMob application id, and update the
-     * com.google.android.gms.ads.APPLICATION_ID meta-data in AndroidManifest.xml to match.
+     * The unit the banner requests: the test unit in debug, the real one in release, decided at
+     * compile time by which source set is in the build.
      */
-    const val PRODUCTION_APPLICATION_ID = TEST_APPLICATION_ID
-
-    /**
-     * The unit the banner actually requests.
-     *
-     * Debug builds always use the test unit. Release builds will use the production constant
-     * once it is filled in above.
-     */
-    val bannerUnitId: String
-        get() = if (dev.randyapps.lapse.BuildConfig.DEBUG) {
-            TEST_BANNER_UNIT_ID
-        } else {
-            PRODUCTION_BANNER_UNIT_ID
-        }
+    val bannerUnitId: String get() = AdUnits.BANNER
 }

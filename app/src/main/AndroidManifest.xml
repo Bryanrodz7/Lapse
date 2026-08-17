@@ -39,12 +39,13 @@
         </activity>
 
         <!--
-          AdMob application id. Test id while in development; see AdIds for the production
-          constant this must be swapped with before release.
+          Real AdMob application id, shared by both builds — that is Google's documented setup,
+          and it is the ad *unit* id that decides whether a real ad is served. Debug builds get
+          the test unit from src/debug/.../ads/AdUnits.kt.
         -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-5316920474106293~8062477327" />
 
         <receiver
             android:name=".widget.NextExpiryWidgetReceiver"
