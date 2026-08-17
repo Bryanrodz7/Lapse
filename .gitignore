@@ -19,3 +19,7 @@ local.properties
 keystore.properties
 *.jks
 *.keystore
+
+# Python bytecode from the store/ generator scripts.
+__pycache__/
+*.pyc
