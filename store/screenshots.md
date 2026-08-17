@@ -186,7 +186,8 @@ and the FAB correctly hides.
 
 ## Still outstanding for the listing
 
-- **Feature graphic** 1024 × 500 — not generated yet
+- ~~Feature graphic 1024 × 500~~ — done: `store/feature-graphic.png`, regenerate with
+  `python store/generate_feature_graphic.py`
 - **Real AdMob app ID + unit ID** — still the test IDs (`AdIds.kt` and the manifest `meta-data`)
 - ~~Privacy policy URL~~ — done: <https://bryanrodz7.github.io/Lapse/privacy-policy/>
 - **Upload keystore** — you create it; command is in `store/play-listing.md`
