@@ -29,7 +29,8 @@ ROOT = os.path.join(HERE, "..")
 # ui/theme/Color.kt — PaperInkMuted. The tagline grey is a warm neutral, not a system grey.
 INK_MUTED = (0x6E, 0x65, 0x59, 255)
 
-SERIF = os.path.join(ROOT, "app", "src", "main", "res", "font", "instrument_serif_regular.ttf")
+SERIF = os.path.join(ROOT, "app", "src", "main", "res",
+                     "font", "instrument_serif_regular.ttf")
 # LapseSans = FontFamily.SansSerif, which is Roboto on Android.
 SANS = os.path.join(HERE, "fonts", "Roboto-Regular.ttf")
 
@@ -48,14 +49,18 @@ TAGLINE = "Know before it expires."
 # width is governed entirely by how much *height* the layout can spare it. That is the whole
 # difference between these two presets.
 #
-#   safe   — nothing below the bottom-third line. 253px of band, wordmark ~216px wide.
-#   poster — uses the full height between the margins. 336px of band, wordmark ~420px wide,
-#            at the cost of putting the tagline inside the bottom third.
+#   poster — the Play asset. Uses the full height between the margins: 336px of band, wordmark
+#            ~341px wide, at the cost of putting the tagline inside the bottom third.
+#   safe    — the alternate. Nothing below the bottom-third line, but only 253px of band, which
+#            holds the wordmark to ~216px — too small to land at real display size.
+#
+# The poster mark is 88px against safe's 64px. It is not just scaled with the canvas: a mark that
+# stays small while the wordmark grows reads as a tittle over the "L" rather than as a logo. The
+# 24px it takes back costs the wordmark ~56px of width, and buys one thing beyond legibility —
+# it pulls the wordmark's right edge clear of a centred video play button.
 PRESETS = {
+    "poster": dict(bottom=H - MARGIN,   mark_d=0.0859, gap_mark=21, gap_tag=14, tagline_w=0.50),
     "safe":   dict(bottom=BOTTOM_THIRD, mark_d=0.0625, gap_mark=18, gap_tag=14, tagline_w=0.50),
-    # Same 64px mark as safe, deliberately: it costs only ~18px of wordmark width, and a mark
-    # that shrinks when the wordmark grows starts reading as a tittle over the "L".
-    "poster": dict(bottom=H - MARGIN,   mark_d=0.0625, gap_mark=18, gap_tag=14, tagline_w=0.50),
 }
 
 PROBE = 200
@@ -84,11 +89,17 @@ def draw_mark(draw, cx, cy, d):
     """
     box = [cx - d / 2, cy - d / 2, cx + d / 2, cy + d / 2]
     # Pillow angles: 0 deg is 3 o'clock, increasing clockwise. Identical spans to the icon's.
-    draw.pieslice(box, start=-90, end=0, fill=URGENT)   # 12 -> 3, the quarter running out
+    # 12 -> 3, the quarter running out
+    draw.pieslice(box, start=-90, end=0, fill=URGENT)
     draw.pieslice(box, start=0, end=270, fill=INK)      # the rest
 
 
-def render(preset, verbose=False):
+def render(preset, verbose=False, boxes=None):
+    """
+    Draws one preset. `boxes`, if given, is filled with each element's final rectangle in
+    output pixels — the layout maths is the only honest source for those, since the downsample
+    rings dark pixels into the tagline and defeats measuring elements back out by colour.
+    """
     p = PRESETS[preset]
     s = SS
     img = Image.new("RGB", (W * s, H * s), PAPER[:3])
@@ -108,35 +119,49 @@ def render(preset, verbose=False):
 
     word_h = band - d - gap_mark - gap_tag - tag_h
     if word_h <= 0:
-        raise SystemExit(f"no room for the wordmark in the {band/s:.0f}px band")
+        raise SystemExit(
+            f"no room for the wordmark in the {band/s:.0f}px band")
     serif = fit_height(SERIF, WORDMARK, word_h)
     wb = serif.getbbox(WORDMARK)
-    word_h = wb[3] - wb[1]   # re-measure: rounding to an integer point size moves it slightly
+    # re-measure: rounding to an integer point size moves it slightly
+    word_h = wb[3] - wb[1]
 
     total = d + gap_mark + word_h + gap_tag + tag_h
     y = band_top + (band - total) / 2
     top = y
 
     draw_mark(draw, left + d / 2, y + d / 2, d)
+    mark_box = (left, y, left + d, y + d)
     y += d + gap_mark
     draw.text((left - wb[0], y - wb[1]), WORDMARK, font=serif, fill=INK)
+    word_box = (left, y, left + (wb[2] - wb[0]), y + word_h)
     y += word_h + gap_tag
     draw.text((left - tb[0], y - tb[1]), TAGLINE, font=sans, fill=INK_MUTED)
+    tag_box = (left, y, left + (tb[2] - tb[0]), y + tag_h)
+
+    if boxes is not None:
+        boxes.update({k: tuple(round(v / s) for v in box) for k, box in
+                      (("mark", mark_box), ("wordmark", word_box), ("tagline", tag_box))})
 
     if verbose:
-        right = max(left + d, left + (wb[2] - wb[0]), left + (tb[2] - tb[0])) / s
-        print(f"  serif {serif.size//s}pt, sans {sans.size//s}pt, mark {d//s}px")
-        print(f"  block y {top/s:.0f}-{(y + tag_h)/s:.0f}   wordmark {(wb[2]-wb[0])/s:.0f}px wide")
-        print(f"  content right edge {right:.0f}px = {right/W*100:.0f}% of width")
+        right = max(left + d, left +
+                    (wb[2] - wb[0]), left + (tb[2] - tb[0])) / s
+        print(
+            f"  serif {serif.size//s}pt, sans {sans.size//s}pt, mark {d//s}px")
+        print(
+            f"  block y {top/s:.0f}-{(y + tag_h)/s:.0f}   wordmark {(wb[2]-wb[0])/s:.0f}px wide")
+        print(
+            f"  content right edge {right:.0f}px = {right/W*100:.0f}% of width")
 
     return img.resize((W, H), Image.LANCZOS)
 
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "both"
+    # feature-graphic.png is the file that gets uploaded, so it is the poster cut.
     targets = {
-        "safe": "feature-graphic.png",
-        "poster": "feature-graphic-poster.png",
+        "poster": "feature-graphic.png",
+        "safe": "feature-graphic-safe.png",
     }
     for name in (targets if which == "both" else [which]):
         print(f"{name}:")
